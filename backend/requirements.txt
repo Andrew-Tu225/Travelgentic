@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+httpx
+pydantic
+pydantic-settings
+google-genai
+sqlalchemy
+asyncpg
+alembic
+# boto3     # S3 storage - add later
