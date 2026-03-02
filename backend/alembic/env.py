@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 load_dotenv()
 
-import models  # registers all models with Base
-from database import Base
+import app.models.models as models  # registers all models with Base
+from app.db.database import Base
 
 config = context.config
 if config.config_file_name is not None:
