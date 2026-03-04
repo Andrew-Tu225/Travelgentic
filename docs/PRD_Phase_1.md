@@ -43,8 +43,8 @@ If this is not happening, the generation quality is not yet there — no amount 
 * **OpenWeatherMap API:** Weather forecasts — used to swap outdoor activities if rain is predicted.
 
 **Generation Logic:**
-* **LLM Call 1:** Map free-text purpose → activity patterns and pacing rules (e.g., "recharge" = max 2 anchor activities/day, long lunches, no early starts).
-* **LLM Call 2:** Given activity patterns + Places API results + constraints, produce a day-by-day JSON schedule.
+* **LLM Call 1:** Map free-text trip purpose + travelers' constraints + user's interests → activity patterns and pacing rules (e.g., "recharge" = max 2 anchor activities/day, long lunches, no early starts).
+* **LLM Call 2:** Given activity patterns + Places API results + weather forecast, produce a day-by-day JSON schedule.
 * **Heuristics Layer:** Geographic clustering per day, realistic travel time between items, daily activity count within pace preference, cost estimation per activity.
 
 **Output Format (Day JSON Outline):**
