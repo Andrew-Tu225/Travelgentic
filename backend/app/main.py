@@ -2,10 +2,13 @@ import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from app.api.generation import router as generation_router
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
@@ -20,6 +23,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+# Include the itinerary generation endpoints
+app.include_router(generation_router, prefix="/api")
 
 @app.get("/")
 async def root():

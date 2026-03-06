@@ -97,10 +97,20 @@ class GenerationOrchestrator:
             
         logger.info("Orchestration complete.")
         
+        # Clean up the output payload specifically for frontend API consumption
+        # We don't want to leak internal LLM instructions like max_activities or search queries
+        clean_itinerary = []
+        for d in daily_schedules:
+            clean_itinerary.append({
+                "day_number": d["day_number"],
+                "theme": d["theme"],
+                "activities": d["activities"] # Preserves the generated activities untouched
+            })
+            
         return {
             "destination": destination,
             "start_date": start_date,
             "duration_days": duration_days,
-            "profile_applied": profile.model_dump(),
-            "itinerary": daily_schedules
+            "trip_vibe": profile.trip_vibe,
+            "itinerary": clean_itinerary
         }
