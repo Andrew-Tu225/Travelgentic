@@ -16,15 +16,18 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 
 from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest
 
-async def run_test_scenario(scenario_name: str, purpose: str, constraints: str | None, interests: list[str]):
-    print(f"--- Scenario: {scenario_name} ---")
+async def run_test_scenario(scenario_name: str, destination: str, duration_days: int, purpose: str, constraints: str | None, interests: list[str]):
+    print(f"--- Scenario: {scenario_name} in {destination} ({duration_days} days) ---")
     request = TripProfileRequest(
+        destination=destination,
+        duration_days=duration_days,
         purpose=purpose,
         constraints=constraints,
         interests=interests
     )
     
     print("Input:")
+    print(f"  Destination: {request.destination}")
     print(f"  Purpose: {request.purpose}")
     print(f"  Constraints: {request.constraints}")
     print(f"  Interests: {request.interests}")
@@ -45,16 +48,29 @@ async def main():
     
     # Scenario 1: The Honeymooners
     await run_test_scenario(
-        scenario_name="Relaxing Honeymoon",
-        purpose="honeymoon, want to relax and disconnect and with time to spend with partner",
-        constraints="bad knee, no early mornings, vegetarian",
-        interests=["spa", "fine dining", "history", "beach", "park"]
+        scenario_name="Relaxed couple getaway",
+        destination="Tokyo, Japan",
+        duration_days=3,
+        purpose="A 3-day relaxing honeymoon full of amazing food",
+        constraints="No early mornings, allergic to shellfish",
+        interests=["fine dining", "spas", "hidden cocktail bars"]
+    )
+
+    await run_test_scenario(
+        scenario_name="Fast-paced solo adventure",
+        destination="Paris, France",
+        duration_days=2,
+        purpose="Seeing as much history and art as possible in 48 hours",
+        constraints="On a budget, lots of walking is fine",
+        interests=["museums", "history", "street food"]
     )
     
-    # Scenario 2: The Action-Packed Group
+    # Scenario 3: The Action-Packed Group (modified to include duration_days)
     await run_test_scenario(
         scenario_name="Intense Weekend Warrior",
-        purpose="Bachelor party weekend, we want to see as much as possible",
+        destination="Las Vegas, NV",
+        duration_days=2, # Added duration_days
+        purpose="Bachelor party weekend, casino, nightlife, we want to see as much as possible",
         constraints="Need a mix of cheap drinks and extreme sports, gluten-free options needed for one guy",
         interests=["nightlife", "adventure", "meat"]
     )
