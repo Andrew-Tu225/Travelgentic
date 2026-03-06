@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest, ActivityPattern
+from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest, ActivityPattern, DailyTheme
 
 @pytest.fixture
 def mock_genai_client():
@@ -18,13 +18,27 @@ def mock_genai_client():
 async def test_extract_activity_pattern(mock_genai_client):
     # Setup mock JSON response that Gemini would return
     mock_response = MagicMock()
-    mock_response.text = '{"max_activities_per_day": 2, "search_categories": ["spa", "fine_dining"], "dietary_tags": ["vegetarian"], "pacing_rules": "No early mornings"}'
+    mock_response.text = '''{
+      "max_activities_per_day": 2,
+      "trip_vibe": "A relaxing and romantic getaway.",
+      "daily_themes": [
+        {
+          "day_number": 1,
+          "theme": "Arrival and Spa",
+          "search_queries": ["luxury spa", "fine dining"]
+        }
+      ],
+      "dietary_tags": ["vegetarian"],
+      "pacing_rules": "No early mornings"
+    }'''
     mock_genai_client.aio.models.generate_content.return_value = mock_response
 
     # Initialize service with dummy key
     service = LLMPlanningService(api_key="dummy_key")
     
     request = TripProfileRequest(
+        destination="Paris",
+        duration_days=1,
         purpose="relaxing honeymoon",
         constraints="vegetarian, no early mornings",
         interests=["spa", "fine dining"]
@@ -35,8 +49,9 @@ async def test_extract_activity_pattern(mock_genai_client):
     # Verify the JSON was parsed correctly into the Pydantic model
     assert isinstance(result, ActivityPattern)
     assert result.max_activities_per_day == 2
-    assert "spa" in result.search_categories
-    assert "fine_dining" in result.search_categories
+    assert result.trip_vibe == "A relaxing and romantic getaway."
+    assert len(result.daily_themes) == 1
+    assert result.daily_themes[0].theme == "Arrival and Spa"
     assert "vegetarian" in result.dietary_tags
     assert result.pacing_rules == "No early mornings"
 
@@ -45,6 +60,7 @@ async def test_extract_activity_pattern(mock_genai_client):
     call_kwargs = mock_genai_client.aio.models.generate_content.call_args.kwargs
     
     prompt_sent = call_kwargs['contents']
+    assert "Paris" in prompt_sent
     assert "relaxing honeymoon" in prompt_sent
     assert "vegetarian" in prompt_sent
     assert "spa, fine dining" in prompt_sent
