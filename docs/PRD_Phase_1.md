@@ -43,11 +43,10 @@ If this is not happening, the generation quality is not yet there — no amount 
 **Data Sources:**
 * **Google Places API:** Attraction data (ratings, photos, hours, categories, coordinates).
 * **Foursquare:** Secondary/fallback data, especially strong for food and local spots.
-* **OpenWeatherMap API:** Weather forecasts — used to swap outdoor activities if rain is predicted.
 
 **Generation Logic:**
 * **LLM Call 1:** Map free-text trip purpose + travelers' constraints + user's interests → activity patterns and pacing rules (e.g., "recharge" = max 2 anchor activities/day, long lunches, no early starts).
-* **LLM Call 2:** Given activity patterns + Places API results + weather forecast, produce a day-by-day JSON schedule.
+* **LLM Call 2:** Given activity patterns + Places API results, produce a day-by-day JSON schedule.
 * **Heuristics Layer:** Geographic clustering per day, realistic travel time between items, daily activity count within pace preference, cost estimation per activity.
 
 **Output Format (Day JSON Outline):**
@@ -58,7 +57,6 @@ If this is not happening, the generation quality is not yet there — no amount 
 | `category_tag` | food / nature / culture / nightlife / adventure / wellness |
 | `time_window` | e.g., "10:00–12:00" — respects wake/sleep prefs and pace |
 | `estimated_cost_usd` | Per-person activity cost band: free / $1–20 / $20–60 / $60+ |
-| `weather_note` | Optional: "Rain expected — indoor alternative suggested" |
 | `place_id` | Google Places ID for linking and future booking integration |
 
 **Cost Estimation Scope:**
