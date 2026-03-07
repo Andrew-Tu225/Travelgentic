@@ -18,21 +18,24 @@ If this is not happening, the generation quality is not yet there — no amount 
 
 ## 3. Features
 
-### Feature 1 — Onboarding Flow
-*Smart form/chat hybrid that collects structured input needed to generate a high-quality itinerary.*
+# Feature 1 — Onboarding Flow
 
-**Steps:**
-1. **Trip Basics:** Origin city, destination (or "Help me choose"), dates or month + duration.
-   * *Note:* "Help me choose destination" must appear prominently here, not as a secondary option. Suggest 1–3 destinations with short rationale based on purpose + interests before generating.
-2. **Purpose & Travelers:** Free-text purpose, traveler count + ages, budget tier.
-3. **Interests & Vibe:** Top 3 interests checklist, pace preference (slow / moderate / fast-paced).
-4. **Constraints (Progressive Disclosure):** Mobility, dietary, must-sees, wake/sleep times, fixed commitments, accessibility. 
-   * *Note:* Default to hidden. Show only if the user expands them.
-5. **Review & Generate:** Summary card, one-click generate button.
+*Lean 2-step form that collects the minimum structured input needed to generate a high-quality itinerary. Deliberately trimmed from the original 5-step plan — the fewer fields before generation, the more the product lives up to its "easier planning" promise.*
 
-**Key Implementation Notes:**
-* Utilize progressive disclosure for advanced constraints.
-* Employ smart defaults throughout — pre-fill sensible values so users can move fast.
+## Steps
+
+**Step 1 — Trip Basics:** Destination (or "Help me choose"), origin city, month + duration.
+- *Note:* "Help me choose destination" appears prominently here, not as a secondary option. Suggests 1–3 destinations with short rationale.
+
+**Step 2 — Vibe & Interests:** Free-text purpose/vibe, budget tier (4 options), top 3 interests (chip select, max 3).
+
+## Key Implementation Notes
+
+- On clicking "Generate Itinerary", fire the LLM call immediately against an anonymous session UUID. Store the result server-side with a 24-hour TTL.
+- Auth gate appears *after* generation, not before. The prompt reads "Your itinerary is ready — create a free account to view it." Google OAuth is the primary CTA; email/password as fallback. Returning users see a prominent "Log in instead" toggle on the same screen.
+- Trip count is enforced server-side on the user record (`trips_generated`). Logged-in users with `trips_generated >= 2` are redirected to the paywall *before* the onboarding form — do not let them fill the form and generate before hitting the wall.
+- Anonymous users who never complete signup: TTL expires after 24 hours, trip is cleaned up.
+- Smart defaults throughout — pre-fill sensible values so users can move fast.
 
 ### Feature 2 — Itinerary Generation Engine
 *The core of the product. Uses external APIs for place data and an LLM to synthesize, filter, and schedule based on user inputs.*
