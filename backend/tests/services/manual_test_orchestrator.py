@@ -8,6 +8,8 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai").setLevel(logging.WARNING)
 
 load_dotenv()
 
@@ -25,28 +27,27 @@ async def main():
     
     orchestrator = GenerationOrchestrator()
     
-    destination = "Chicago, IL"
-    start_date = "2026-03-20"
-    duration_days = 3
-    
-    # Let's do a 2-day trip to limit API calls during testing
     request = TripProfileRequest(
-        destination=destination,
-        duration_days=duration_days,
-        purpose="romantic architectural tour",
-        constraints="want a relaxed pace, vegetarian",
-        interests=["architecture", "museums", "romantic dinners"]
+        destination="Chicago, IL",
+        origin="New York",
+        month="June",
+        duration_days=3,
+        purpose="romantic architectural tour, slow mornings with great coffee",
+        budget="comfort",
+        interests=["culture", "food", "history"]
     )
     
-    print(f"Testing City: {destination} for {duration_days} days starting {start_date}")
-    print(f"Profile: {request.purpose} | {request.constraints} | {request.interests}\n")
+    start_date = "2026-06-01"
+    
+    print(f"Testing City: {request.destination} for {request.duration_days} days ({request.month})")
+    print(f"Origin: {request.origin}")
+    print(f"Budget: {request.budget}")
+    print(f"Profile: {request.purpose} | {request.interests}\n")
     
     try:
         final_itinerary = await orchestrator.generate_full_itinerary(
-            destination=destination,
+            trip_request=request,
             start_date=start_date,
-            duration_days=duration_days,
-            trip_request=request
         )
         
         print("\n=== FINAL RESULT ===")

@@ -1,7 +1,11 @@
 import os
 import asyncio
 import json
+import logging
 from dotenv import load_dotenv
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai").setLevel(logging.WARNING)
 
 # Load environment variables from the .env file in the backend directory
 load_dotenv()
@@ -16,20 +20,24 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 
 from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest
 
-async def run_test_scenario(scenario_name: str, destination: str, duration_days: int, purpose: str, constraints: str | None, interests: list[str]):
+async def run_test_scenario(scenario_name: str, destination: str, origin: str, month: str, duration_days: int, purpose: str, budget: str, interests: list[str]):
     print(f"--- Scenario: {scenario_name} in {destination} ({duration_days} days) ---")
     request = TripProfileRequest(
         destination=destination,
+        origin=origin,
+        month=month,
         duration_days=duration_days,
         purpose=purpose,
-        constraints=constraints,
+        budget=budget,
         interests=interests
     )
     
     print("Input:")
     print(f"  Destination: {request.destination}")
+    print(f"  Origin: {request.origin}")
+    print(f"  Month: {request.month}")
     print(f"  Purpose: {request.purpose}")
-    print(f"  Constraints: {request.constraints}")
+    print(f"  Budget: {request.budget}")
     print(f"  Interests: {request.interests}")
     print("\nCalling Gemini...")
 
@@ -50,29 +58,36 @@ async def main():
     await run_test_scenario(
         scenario_name="Relaxed couple getaway",
         destination="Tokyo, Japan",
+        origin="Los Angeles",
+        month="June",
         duration_days=3,
-        purpose="A 3-day relaxing honeymoon full of amazing food",
-        constraints="No early mornings, allergic to shellfish",
-        interests=["fine dining", "spas", "hidden cocktail bars"]
+        purpose="A 3-day relaxing honeymoon full of amazing food and slow mornings",
+        budget="luxury",
+        interests=["food", "wellness", "culture"]
     )
 
+    # Scenario 2: Budget solo adventure
     await run_test_scenario(
         scenario_name="Fast-paced solo adventure",
         destination="Paris, France",
+        origin="New York",
+        month="March",
         duration_days=2,
         purpose="Seeing as much history and art as possible in 48 hours",
-        constraints="On a budget, lots of walking is fine",
-        interests=["museums", "history", "street food"]
+        budget="budget",
+        interests=["culture", "history", "food"]
     )
     
-    # Scenario 3: The Action-Packed Group (modified to include duration_days)
+    # Scenario 3: Mid-range group trip
     await run_test_scenario(
-        scenario_name="Intense Weekend Warrior",
+        scenario_name="Weekend with friends",
         destination="Las Vegas, NV",
-        duration_days=2, # Added duration_days
-        purpose="Bachelor party weekend, casino, nightlife, we want to see as much as possible",
-        constraints="Need a mix of cheap drinks and extreme sports, gluten-free options needed for one guy",
-        interests=["nightlife", "adventure", "meat"]
+        origin="San Francisco",
+        month="October",
+        duration_days=2,
+        purpose="Bachelor party weekend, nightlife, adventures, we want to see as much as possible",
+        budget="mid",
+        interests=["nightlife", "adventure", "food"]
     )
 
 if __name__ == "__main__":

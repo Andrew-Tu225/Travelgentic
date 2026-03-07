@@ -54,7 +54,7 @@ class LLMSchedulingService:
         
         DAY'S THEME: {day_theme}
         
-        You MUST strictly follow these profile rules for pacing, dietary, and constraints:
+        You MUST strictly follow these profile rules for pacing and budget:
         {safe_rules}
         
         Here are the specific available places fetched for this exact day (choose the best ones that fit the profile and theme):
@@ -66,6 +66,7 @@ class LLMSchedulingService:
         3. Respect the max_activities_per_day defined in the profile rules.
         4. The theme should reflect the DAY'S THEME.
         5. Provide a 1-2 sentence description tailored to the traveler's purpose.
+        6. Respect the budget_context — select places and estimate costs that match the traveler's budget tier.
         """
         
         logger.info(f"Generating schedule for Day {day_number} ({day_theme})....")

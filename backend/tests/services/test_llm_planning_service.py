@@ -21,6 +21,7 @@ async def test_extract_activity_pattern(mock_genai_client):
     mock_response.text = '''{
       "max_activities_per_day": 2,
       "trip_vibe": "A relaxing and romantic getaway.",
+      "budget_context": "Focus on premium experiences, fine dining, private tours.",
       "daily_themes": [
         {
           "day_number": 1,
@@ -28,7 +29,6 @@ async def test_extract_activity_pattern(mock_genai_client):
           "search_queries": ["luxury spa", "fine dining"]
         }
       ],
-      "dietary_tags": ["vegetarian"],
       "pacing_rules": "No early mornings"
     }'''
     mock_genai_client.aio.models.generate_content.return_value = mock_response
@@ -38,9 +38,11 @@ async def test_extract_activity_pattern(mock_genai_client):
     
     request = TripProfileRequest(
         destination="Paris",
+        origin="New York",
+        month="June",
         duration_days=1,
         purpose="relaxing honeymoon",
-        constraints="vegetarian, no early mornings",
+        budget="luxury",
         interests=["spa", "fine dining"]
     )
     
@@ -50,9 +52,9 @@ async def test_extract_activity_pattern(mock_genai_client):
     assert isinstance(result, ActivityPattern)
     assert result.max_activities_per_day == 2
     assert result.trip_vibe == "A relaxing and romantic getaway."
+    assert result.budget_context == "Focus on premium experiences, fine dining, private tours."
     assert len(result.daily_themes) == 1
     assert result.daily_themes[0].theme == "Arrival and Spa"
-    assert "vegetarian" in result.dietary_tags
     assert result.pacing_rules == "No early mornings"
 
     # Verify the Gemini client was called properly with our inputs
@@ -61,8 +63,10 @@ async def test_extract_activity_pattern(mock_genai_client):
     
     prompt_sent = call_kwargs['contents']
     assert "Paris" in prompt_sent
+    assert "New York" in prompt_sent
+    assert "June" in prompt_sent
     assert "relaxing honeymoon" in prompt_sent
-    assert "vegetarian" in prompt_sent
+    assert "luxury" in prompt_sent
     assert "spa, fine dining" in prompt_sent
     
     # Verify the schema was passed

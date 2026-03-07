@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any
 from datetime import datetime, timedelta
 
 from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest, ActivityPattern
@@ -45,18 +45,20 @@ class GenerationOrchestrator:
 
     async def generate_full_itinerary(
         self, 
-        destination: str, 
-        start_date: str, 
-        duration_days: int, 
-        trip_request: TripProfileRequest
+        trip_request: TripProfileRequest,
+        start_date: str,
     ) -> Dict[str, Any]:
         """
         The Master Flow: Ties Call 1 (Thematic Planner), APIs, and iterative Call 2s together.
-        """
-        logger.info(f"Starting generation for {destination} ({duration_days} days)")
         
-        # Ensure the request has the correct duration populated
-        trip_request.duration_days = duration_days
+        Args:
+            trip_request: The user's trip profile (destination, origin, month, duration, purpose, budget, interests)
+            start_date: Derived start date in YYYY-MM-DD format (computed from month by the API layer)
+        """
+        destination = trip_request.destination
+        duration_days = trip_request.duration_days
+        
+        logger.info(f"Starting generation for {destination} ({duration_days} days, starting {start_date})")
         
         # 1. LLM CALL 1: The Thematic Profiler
         logger.info("Executing LLM Call 1 (Thematic Profiler)...")
@@ -65,7 +67,6 @@ class GenerationOrchestrator:
         # 2. ITERATIVE LLM CALL 2: The Passive Scheduler
         logger.info("Executing Iterative LLM Call 2 (Scheduler)...")
         daily_schedules = []
-        target_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
         
         for day in range(1, duration_days + 1):
             
@@ -97,20 +98,22 @@ class GenerationOrchestrator:
             
         logger.info("Orchestration complete.")
         
-        # Clean up the output payload specifically for frontend API consumption
-        # We don't want to leak internal LLM instructions like max_activities or search queries
+        # Clean up the output payload for frontend API consumption
         clean_itinerary = []
         for d in daily_schedules:
             clean_itinerary.append({
                 "day_number": d["day_number"],
                 "theme": d["theme"],
-                "activities": d["activities"] # Preserves the generated activities untouched
+                "activities": d["activities"]
             })
             
         return {
             "destination": destination,
+            "origin": trip_request.origin,
+            "month": trip_request.month,
             "start_date": start_date,
             "duration_days": duration_days,
+            "budget": trip_request.budget,
             "trip_vibe": profile.trip_vibe,
             "itinerary": clean_itinerary
         }

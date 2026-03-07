@@ -17,9 +17,12 @@ def mock_orchestrator():
         # Setup the mock to return a fake successful itinerary payload
         mock_instance.generate_full_itinerary.return_value = {
             "destination": "Test City",
+            "origin": "New York",
+            "month": "April",
             "start_date": "2026-04-01",
             "duration_days": 1,
-            "profile_applied": {},
+            "budget": "mid",
+            "trip_vibe": "A quick testing trip.",
             "itinerary": [
                 {
                     "day_number": 1,
@@ -29,7 +32,7 @@ def mock_orchestrator():
             ]
         }
         
-        # We also need to override the dependency in the FastAPI app for the test duration
+        # Override the dependency in the FastAPI app for the test duration
         from app.api.generation import get_orchestrator
         app.dependency_overrides[get_orchestrator] = lambda: mock_instance
         
@@ -39,16 +42,15 @@ def mock_orchestrator():
         app.dependency_overrides.clear()
 
 
-from fastapi.testclient import TestClient
-
 def test_generate_itinerary_endpoint(mock_orchestrator):
-    # This is the expected flat JSON payload the user would send to the API
+    # This is the expected flat JSON payload matching the onboarding flow
     payload = {
         "destination": "Test City",
-        "start_date": "2026-04-01",
+        "origin": "New York",
+        "month": "April",
         "duration_days": 1,
         "purpose": "A quick testing trip",
-        "constraints": "none",
+        "budget": "mid",
         "interests": ["testing", "APIs"]
     }
     
@@ -64,13 +66,14 @@ def test_generate_itinerary_endpoint(mock_orchestrator):
     data = response.json()
     assert data["destination"] == "Test City"
     assert data["duration_days"] == 1
+    assert data["budget"] == "mid"
     assert data["itinerary"][0]["theme"] == "Test Theme"
     
-    # Ensure our mock orchestrator was called with the arguments extracted from the payload
+    # Ensure our mock orchestrator was called with the correct new signature
     mock_orchestrator.generate_full_itinerary.assert_called_once()
     call_kwargs = mock_orchestrator.generate_full_itinerary.call_args.kwargs
     
-    assert call_kwargs["destination"] == "Test City"
     assert call_kwargs["start_date"] == "2026-04-01"
-    assert call_kwargs["duration_days"] == 1
     assert call_kwargs["trip_request"].purpose == "A quick testing trip"
+    assert call_kwargs["trip_request"].budget == "mid"
+    assert call_kwargs["trip_request"].origin == "New York"
