@@ -1,4 +1,5 @@
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function Home() {
@@ -25,10 +26,25 @@ export default function Home() {
           <a href="#" className="transition-colors hover:text-white/70">Pricing</a>
         </nav>
 
-        {/* CTA */}
-        <Link href="/login" className="rounded-[10px] bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-5 py-2 text-[13px] font-semibold text-[#1a1108] no-underline">
-          Get Started
-        </Link>
+        {/* Auth */}
+        <div className="flex items-center gap-3">
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="cursor-pointer rounded-[10px] border-none bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-5 py-2 font-sans text-[13px] font-semibold text-[#1a1108] transition-all hover:from-[#d4b97a] hover:to-[#b8904f]">
+                Get Started
+              </button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                },
+              }}
+            />
+          </Show>
+        </div>
       </header>
 
       {/* ─── Hero Section ─── */}

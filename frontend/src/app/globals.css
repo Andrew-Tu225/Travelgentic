@@ -34,3 +34,117 @@ body {
   background: rgba(200, 169, 110, 0.2);
   border-radius: 4px;
 }
+
+/* ─── Clerk Theme Overrides ─── */
+/* Clerk CSS custom properties — theme at the deepest level */
+:root {
+  --clerk-font-family: 'DM Sans', sans-serif;
+  --clerk-color-primary: #C8A96E;
+  --clerk-color-danger: #ef4444;
+  --clerk-color-success: #22c55e;
+  --clerk-color-warning: #eab308;
+  --clerk-color-text-primary: #ffffff;
+  --clerk-color-text-secondary: rgba(255, 255, 255, 0.6);
+  --clerk-color-text-tertiary: rgba(255, 255, 255, 0.4);
+  --clerk-color-background-primary: #1a1610;
+  --clerk-color-background-secondary: rgba(255, 255, 255, 0.06);
+  --clerk-color-border: rgba(255, 255, 255, 0.1);
+  --clerk-color-input-background: rgba(255, 255, 255, 0.06);
+  --clerk-color-input-border: rgba(255, 255, 255, 0.12);
+  --clerk-border-radius: 10px;
+}
+
+/* Broad Clerk element overrides */
+[data-clerk-component] *,
+[class*="cl-"] {
+  --cl-chassis-bg: #1a1610 !important;
+  --cl-chassis-text: #fff !important;
+}
+
+/* Card / modal backgrounds */
+[class*="cl-card"],
+[class*="cl-modal"] {
+  background-color: #1a1610 !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Close button (X) */
+[class*="cl-modalCloseButton"],
+[class*="cl-close"],
+button[aria-label="Close"] {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+button[aria-label="Close"]:hover {
+  color: #fff !important;
+}
+
+/* All text inside Clerk */
+[class*="cl-headerTitle"] {
+  color: #fff !important;
+}
+
+[class*="cl-headerSubtitle"],
+[class*="cl-dividerText"],
+[class*="cl-formFieldLabel"],
+[class*="cl-identityPreview"] {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[class*="cl-footer"] {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+[class*="cl-footerAction"] a {
+  color: #C8A96E !important;
+}
+
+/* Social / Google button */
+[class*="cl-socialButtons"] button {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+[class*="cl-socialButtons"] button:hover {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+}
+[class*="cl-socialButtons"] span {
+  color: #fff !important;
+}
+
+/* Divider line */
+[class*="cl-dividerLine"] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Inputs */
+[class*="cl-formFieldInput"] input,
+[class*="cl-formFieldInput"] {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+[class*="cl-formFieldInput"] input::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* User button popover */
+[class*="cl-userButtonPopover"] {
+  background-color: #1a1610 !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  color: #fff !important;
+}
+[class*="cl-userButtonPopover"] button,
+[class*="cl-userButtonPopover"] span {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+[class*="cl-userButtonPopover"] button:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+[class*="cl-userPreviewMainIdentifier"] {
+  color: #fff !important;
+}
+[class*="cl-userPreviewSecondaryIdentifier"] {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
