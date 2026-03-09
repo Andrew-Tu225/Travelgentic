@@ -3,7 +3,7 @@ import enum
 from datetime import datetime, date
 from sqlalchemy import (
     Column, String, Integer, Text, Date, DateTime,
-    ForeignKey, Enum, JSON
+    ForeignKey, Enum, JSON, Boolean
 )
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
@@ -48,9 +48,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String(50), unique=True, nullable=False)
-    email = Column(String(255), unique=True, nullable=False)
+    clerk_id = Column(String(255), unique=True, nullable=False)
+    trips_generated = Column(Integer, default=0, nullable=False)
+    is_subscribed = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     trips = relationship("Trip", back_populates="user")
