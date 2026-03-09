@@ -21,10 +21,10 @@ export function AuthGate({ onComplete }) {
         <div className="mb-6 text-center">
           <div className="mb-3.5 inline-flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[rgba(200,169,110,0.3)] bg-[rgba(200,169,110,0.12)] text-[20px]">✦</div>
           <h2 className="mb-1.5 font-serif text-[22px] font-semibold text-white">
-            Your itinerary is ready
+            One quick step
           </h2>
           <p className="font-sans text-[14px] leading-[1.6] text-white/40">
-            Sign in to view your personalized itinerary.
+            Create a free account and we'll generate your itinerary.
           </p>
         </div>
       </Reveal>

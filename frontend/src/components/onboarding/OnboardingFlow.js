@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
-import { GeneratingState } from "./GeneratingState";
-import { AuthGate } from "./AuthGate";
 import { CompletionScreen } from "./CompletionScreen";
+
+const STORAGE_KEY = "travelgentic_onboarding";
 
 const defaultData = {
   destination: "", origin: "", month: "", duration: "",
@@ -19,13 +20,42 @@ const TITLES = {
 };
 
 export function OnboardingFlow() {
+  const { isSignedIn, isLoaded } = useUser();
+  const clerk = useClerk();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
 
+  // After sign-in, restore saved onboarding data and go back to step2
+  useEffect(() => {
+    if (!isLoaded) return;
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved && isSignedIn) {
+      setData(JSON.parse(saved));
+      sessionStorage.removeItem(STORAGE_KEY);
+      setScreen("step2");
+    }
+  }, [isLoaded, isSignedIn]);
+
   const handleGenerate = () => {
-    setScreen("generating");
-    setTimeout(() => setScreen("auth"), 3800);
+    if (isSignedIn) {
+      setScreen("done");
+    } else {
+      // Save data, then open Clerk sign-in modal (same as "Get Started" button)
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      clerk.openSignIn();
+    }
   };
+
+  // Show a spinner while Clerk is loading
+  if (!isLoaded) {
+    return (
+      <div className="w-full max-w-[440px] rounded-[18px] border border-white/[0.07] bg-white/[0.03] p-7 sm:p-8 backdrop-blur-[20px] font-sans">
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 rounded-full border-2 border-[rgba(200,169,110,0.2)] border-t-[#C8A96E] animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   const isStepMode = screen === "step1" || screen === "step2";
 
@@ -52,15 +82,13 @@ export function OnboardingFlow() {
 
         {screen === "step1" && <StepOne data={data} setData={setData} onNext={() => setScreen("step2")} />}
         {screen === "step2" && <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} />}
-        {screen === "generating" && <GeneratingState destination={data.destination} />}
-        {screen === "auth" && <AuthGate onComplete={() => setScreen("done")} />}
         {screen === "done" && <CompletionScreen destination={data.destination} />}
       </div>
 
       {/* Cost disclaimer */}
       {isStepMode && (
         <p className="mt-4 max-w-[360px] text-center font-sans text-[11px] leading-[1.6] text-white/20">
-          Activity cost estimates only — excludes flights, hotels & transport.
+          Activity cost estimates only — excludes flights, hotels &amp; transport.
         </p>
       )}
     </>
