@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
@@ -24,6 +25,7 @@ export function OnboardingFlow() {
   const { isSignedIn, isLoaded } = useUser();
   const { getToken } = useAuth();
   const clerk = useClerk();
+  const router = useRouter();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
 
@@ -48,7 +50,7 @@ export function OnboardingFlow() {
 
   const handleGenerate = () => {
     if (isSignedIn) {
-      setScreen("done");
+      router.push("/dashboard");
     } else {
       // Save data, then open Clerk sign-in modal (same as "Get Started" button)
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));

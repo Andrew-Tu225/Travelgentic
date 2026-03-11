@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { Show, SignInButton, UserButton, useUser, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
@@ -10,6 +11,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export default function Home() {
   const { isSignedIn, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
+
+  // Redirect signed-in users to dashboard
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/dashboard");
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   // Sync user to backend after sign-in (fire-and-forget)
   useEffect(() => {
