@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from app.api.generation import router as generation_router
 from app.api.users import router as users_router
+from app.api.places import router as places_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +39,7 @@ app.add_middleware(
 # Include routers
 app.include_router(generation_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(places_router, prefix="/api")
 
 @app.get("/")
 async def root():
