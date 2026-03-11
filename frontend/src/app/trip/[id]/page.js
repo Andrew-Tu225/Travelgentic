@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import Link from "next/link";
+import { fetchTripDetails } from "@/lib/api";
 
 const CATEGORY_COLORS = {
   food: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "#f59e0b" },
@@ -23,18 +25,41 @@ function getCategoryColor(tag) {
   return CATEGORY_COLORS[tag?.toLowerCase()] || DEFAULT_COLOR;
 }
 
-export default function TripResultPage() {
+export default function TripDetailsPage() {
   const router = useRouter();
+  const params = useParams();
+  const { getToken } = useAuth();
   const [trip, setTrip] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("travelgentic_trip_result");
-    if (!raw) {
-      router.replace("/dashboard");
-      return;
-    }
-    setTrip(JSON.parse(raw));
-  }, []);
+    if (!params?.id) return;
+
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const data = await fetchTripDetails(params.id, token);
+        setTrip(data);
+      } catch (err) {
+        console.error("Failed to load trip:", err);
+        setError("Could not load trip details.");
+      }
+    })();
+  }, [params?.id]);
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#100e0b] text-white">
+        <div className="text-center">
+          <p className="mb-4 text-white/50">{error}</p>
+          <button onClick={() => router.push("/dashboard")} className="text-[#C8A96E] hover:underline">
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!trip) {
     return (
@@ -105,10 +130,27 @@ export default function TripResultPage() {
         </div>
       </div>
 
-      {/* Day columns — horizontal scroll */}
+      {/* Day navigation pills (mobile) */}
+      <div className="block md:hidden border-b border-white/5 px-4 py-3 overflow-x-auto">
+        <div className="flex gap-2">
+          {trip.itinerary.map((day) => (
+            <a
+              key={day.day_number}
+              href={`#day-${day.day_number}`}
+              className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50 no-underline transition-all hover:border-[rgba(200,169,110,0.3)] hover:text-[#C8A96E]"
+            >
+              <span className="font-semibold text-[#C8A96E]">{day.day_number}</span>
+              <span className="max-w-[100px] truncate">{day.theme}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* Day columns */}
       <div className="px-4 py-8 sm:px-6 sm:py-10 lg:px-12">
         <div className="mx-auto max-w-7xl">
-          <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-thin">
+          {/* Desktop: horizontal scroll */}
+          <div className="hidden md:flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory">
             {trip.itinerary.map((day, dayIdx) => (
               <Reveal key={day.day_number} delay={dayIdx * 80}>
                 <div className="w-[320px] min-w-[320px] snap-start flex-shrink-0 rounded-[16px] border border-white/[0.07] bg-white/[0.02] backdrop-blur-[8px]">
@@ -136,7 +178,6 @@ export default function TripResultPage() {
                           key={actIdx}
                           className="group rounded-[12px] border border-white/[0.06] bg-white/[0.03] p-4 transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.05]"
                         >
-                          {/* Time + category */}
                           <div className="mb-2.5 flex items-center justify-between">
                             <span className="text-[12px] font-medium text-white/50">
                               {activity.time_window}
@@ -152,18 +193,80 @@ export default function TripResultPage() {
                               {activity.category_tag}
                             </span>
                           </div>
-
-                          {/* Place name */}
                           <h4 className="mb-1.5 text-[14px] font-semibold text-white leading-[1.3]">
                             {activity.place_name}
                           </h4>
-
-                          {/* Description */}
                           <p className="mb-3 text-[12px] leading-[1.6] text-white/35">
                             {activity.description}
                           </p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-white/25">💰</span>
+                            <span className="text-[11px] text-white/30">
+                              {activity.estimated_cost_usd}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
 
-                          {/* Cost */}
+          {/* Mobile: vertical stack */}
+          <div className="flex flex-col gap-6 md:hidden">
+            {trip.itinerary.map((day, dayIdx) => (
+              <Reveal key={day.day_number} delay={dayIdx * 60}>
+                <div
+                  id={`day-${day.day_number}`}
+                  className="scroll-mt-20 rounded-[16px] border border-white/[0.07] bg-white/[0.02] backdrop-blur-[8px]"
+                >
+                  {/* Day header */}
+                  <div className="border-b border-white/[0.06] p-5">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#C8A96E] text-[12px] font-bold text-[#C8A96E]">
+                        {day.day_number}
+                      </span>
+                      <span className="text-[11px] text-white/25">
+                        {day.activities?.length || 0} activities
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-[16px] font-semibold text-white leading-[1.3]">
+                      {day.theme}
+                    </h3>
+                  </div>
+
+                  {/* Activity cards */}
+                  <div className="flex flex-col gap-3 p-4">
+                    {day.activities?.map((activity, actIdx) => {
+                      const color = getCategoryColor(activity.category_tag);
+                      return (
+                        <div
+                          key={actIdx}
+                          className="rounded-[12px] border border-white/[0.06] bg-white/[0.03] p-4"
+                        >
+                          <div className="mb-2.5 flex items-center justify-between">
+                            <span className="text-[12px] font-medium text-white/50">
+                              {activity.time_window}
+                            </span>
+                            <span
+                              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                              style={{
+                                backgroundColor: color.bg,
+                                border: `1px solid ${color.border}`,
+                                color: color.text,
+                              }}
+                            >
+                              {activity.category_tag}
+                            </span>
+                          </div>
+                          <h4 className="mb-1.5 text-[14px] font-semibold text-white leading-[1.3]">
+                            {activity.place_name}
+                          </h4>
+                          <p className="mb-3 text-[12px] leading-[1.6] text-white/35">
+                            {activity.description}
+                          </p>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] text-white/25">💰</span>
                             <span className="text-[11px] text-white/30">

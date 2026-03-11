@@ -52,10 +52,8 @@ export default function TripLoadingPage() {
         const token = await getToken();
         const result = await generateItinerary(tripData, token);
 
-        // Store result and navigate
-        sessionStorage.setItem("travelgentic_trip_result", JSON.stringify(result));
         sessionStorage.removeItem("travelgentic_pending_trip");
-        router.replace("/trip/result");
+        router.replace(`/trip/${result.trip_id}`);
       } catch (err) {
         console.error("Generation failed:", err);
         setError(err.message || "Something went wrong");

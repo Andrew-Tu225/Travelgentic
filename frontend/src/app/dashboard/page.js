@@ -5,8 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import Link from "next/link";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { fetchTrips } from "@/lib/api";
 
 export default function DashboardPage() {
   const { getToken } = useAuth();
@@ -14,10 +13,17 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: fetch real trips from backend
-    // For now, simulate an empty state
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    (async () => {
+      try {
+        const token = await getToken();
+        const data = await fetchTrips(token);
+        setTrips(data);
+      } catch (err) {
+        console.error("Failed to fetch trips:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   return (
@@ -75,14 +81,14 @@ export default function DashboardPage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {trips.map((trip, i) => (
               <Reveal key={trip.id || i} delay={i * 60}>
-                <div className="group relative rounded-[16px] border border-white/[0.07] bg-white/[0.03] p-6 backdrop-blur-[12px] transition-all duration-300 hover:border-[rgba(200,169,110,0.2)] hover:bg-white/[0.05]">
+                <Link href={`/trip/${trip.id}`} className="block h-full group relative rounded-[16px] border border-white/[0.07] bg-white/[0.03] p-6 backdrop-blur-[12px] transition-all duration-300 hover:border-[rgba(200,169,110,0.2)] hover:bg-white/[0.05] no-underline">
                   {/* Accent line */}
                   <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(200,169,110,0.3)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-[24px]">✈</span>
                     <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-sans text-[11px] text-white/40">
-                      {trip.duration || "—"} days
+                      {trip.duration_days || "—"} days
                     </span>
                   </div>
 
@@ -90,14 +96,14 @@ export default function DashboardPage() {
                     {trip.destination || "Untitled Trip"}
                   </h3>
                   <p className="mb-4 font-sans text-[13px] text-white/35">
-                    {trip.month || ""} · {trip.purpose || ""}
+                    {trip.month || ""} · {trip.budget || ""}
                   </p>
 
                   <div className="flex items-center gap-2 font-sans text-[13px] text-[#C8A96E] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     View itinerary
                     <span className="translate-x-0 transition-transform duration-200 group-hover:translate-x-1">→</span>
                   </div>
-                </div>
+                </Link>
               </Reveal>
             ))}
           </div>
