@@ -8,6 +8,6 @@ sqlalchemy
 asyncpg
 alembic
 python-dotenv
-# boto3     # S3 storage - add later
 pytest
 pytest-asyncio
+PyJWT[crypto]

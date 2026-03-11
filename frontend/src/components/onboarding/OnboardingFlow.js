@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useUser, useAuth, useClerk } from "@clerk/nextjs";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
 import { CompletionScreen } from "./CompletionScreen";
 
 const STORAGE_KEY = "travelgentic_onboarding";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const defaultData = {
   destination: "", origin: "", month: "", duration: "",
@@ -21,11 +22,12 @@ const TITLES = {
 
 export function OnboardingFlow() {
   const { isSignedIn, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const clerk = useClerk();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
 
-  // After sign-in, restore saved onboarding data and go back to step2
+  // After sign-in, restore saved onboarding data and sync user to backend
   useEffect(() => {
     if (!isLoaded) return;
     const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -33,6 +35,14 @@ export function OnboardingFlow() {
       setData(JSON.parse(saved));
       sessionStorage.removeItem(STORAGE_KEY);
       setScreen("step2");
+
+      // Sync user to backend (fire-and-forget, don't block UI)
+      getToken().then((token) => {
+        fetch(`${API_BASE}/api/users/sync`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch((err) => console.error("User sync failed:", err));
+      });
     }
   }, [isLoaded, isSignedIn]);
 

@@ -1,8 +1,27 @@
+"use client";
+
+import { useEffect } from "react";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, UserButton, useUser, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const { getToken } = useAuth();
+
+  // Sync user to backend after sign-in (fire-and-forget)
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    getToken().then((token) => {
+      fetch(`${API_BASE}/api/users/sync`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch((err) => console.error("User sync failed:", err));
+    });
+  }, [isLoaded, isSignedIn]);
   return (
     <div className="min-h-screen bg-[#100e0b] font-sans text-white">
 
