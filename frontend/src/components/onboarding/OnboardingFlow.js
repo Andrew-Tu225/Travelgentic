@@ -50,7 +50,9 @@ export function OnboardingFlow() {
 
   const handleGenerate = () => {
     if (isSignedIn) {
-      router.push("/dashboard");
+      // Store onboarding data for the loading page to pick up
+      sessionStorage.setItem("travelgentic_pending_trip", JSON.stringify(data));
+      router.push("/trip/loading");
     } else {
       // Save data, then open Clerk sign-in modal (same as "Get Started" button)
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
