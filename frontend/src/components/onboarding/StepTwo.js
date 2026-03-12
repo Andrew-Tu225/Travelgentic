@@ -23,7 +23,7 @@ const BUDGETS = [
   { id: "luxury", label: "Luxury", icon: "👑", sub: "5-star & fine dining" },
 ];
 
-export function StepTwo({ data, setData, onGenerate, onBack }) {
+export function StepTwo({ data, setData, onGenerate, onBack, quota }) {
   const toggleInterest = (id) => {
     const sel = data.interests.includes(id)
       ? data.interests.filter(i => i !== id)
@@ -55,11 +55,10 @@ export function StepTwo({ data, setData, onGenerate, onBack }) {
               <button
                 key={b.id}
                 onClick={() => setData({ ...data, budget: b.id })}
-                className={`cursor-pointer rounded-[10px] border-[1.5px] px-3 py-3.5 text-left font-sans transition-all duration-200 ${
-                  sel
+                className={`cursor-pointer rounded-[10px] border-[1.5px] px-3 py-3.5 text-left font-sans transition-all duration-200 ${sel
                     ? "border-[#C8A96E] bg-[rgba(200,169,110,0.1)] text-[#C8A96E]"
                     : "border-white/[0.08] bg-white/[0.03] text-white/60"
-                }`}
+                  }`}
               >
                 <div className="mb-1.5 text-[20px]">{b.icon}</div>
                 <div className="text-[14px] font-semibold">{b.label}</div>
@@ -80,13 +79,12 @@ export function StepTwo({ data, setData, onGenerate, onBack }) {
               <button
                 key={int.id}
                 onClick={() => !disabled && toggleInterest(int.id)}
-                className={`flex items-center gap-[5px] rounded-full border-[1.5px] px-3.5 py-2 font-sans text-[13px] transition-all duration-200 ${
-                  sel
+                className={`flex items-center gap-[5px] rounded-full border-[1.5px] px-3.5 py-2 font-sans text-[13px] transition-all duration-200 ${sel
                     ? "border-[#C8A96E] bg-[rgba(200,169,110,0.12)] text-[#C8A96E] cursor-pointer"
                     : disabled
                       ? "border-white/10 bg-white/[0.03] text-white/20 cursor-not-allowed"
                       : "border-white/10 bg-white/[0.03] text-white/60 cursor-pointer"
-                }`}
+                  }`}
               >
                 <span>{int.icon}</span> {int.label}
               </button>
@@ -100,7 +98,14 @@ export function StepTwo({ data, setData, onGenerate, onBack }) {
           <GhostBtn onClick={onBack}>← Back</GhostBtn>
           <div className="flex-1">
             <PrimaryBtn onClick={onGenerate} disabled={!canGenerate}>
-              ✦ Generate Itinerary
+              <span className="flex w-full items-center justify-center gap-2">
+                <span>✦ Generate Itinerary</span>
+                {quota && !quota.isSubscribed && (
+                  <span className="font-normal text-[13px] text-white/70">
+                    ({Math.max(0, quota.remaining)} left)
+                  </span>
+                )}
+              </span>
             </PrimaryBtn>
           </div>
         </div>

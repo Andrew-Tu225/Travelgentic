@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
+import { fetchUserStatus } from "@/lib/api";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
@@ -29,6 +30,20 @@ export function OnboardingFlow() {
   const router = useRouter();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
+  const [quota, setQuota] = useState(null);
+
+  // Fetch quota when signed in
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      getToken()
+        .then(token => fetchUserStatus(token))
+        .then(status => setQuota({
+          isSubscribed: status.is_subscribed,
+          remaining: 5 - status.trips_generated
+        }))
+        .catch(err => console.error("Failed to fetch quota:", err));
+    }
+  }, [isLoaded, isSignedIn, getToken]);
 
   // After sign-in, restore saved onboarding data and sync user to backend
   useEffect(() => {
@@ -89,9 +104,17 @@ export function OnboardingFlow() {
           <div className="mb-7">
             <div className="mb-3.5 flex items-center justify-between">
               <StepDots current={screen === "step1" ? 0 : 1} />
-              <span className="text-[11px] tracking-[0.05em] text-white/25">
-                {screen === "step1" ? "1" : "2"} / 2
-              </span>
+              <div className="flex items-center gap-3">
+                {quota && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-sans text-[10px] font-medium text-[#C8A96E]">
+                    <span>✦</span>
+                    {quota.isSubscribed ? "Pro" : `${Math.max(0, quota.remaining)} / 5 Credits`}
+                  </div>
+                )}
+                <span className="text-[11px] tracking-[0.05em] text-white/25">
+                  {screen === "step1" ? "1" : "2"} / 2
+                </span>
+              </div>
             </div>
             <motion.div
               key={screen}
@@ -130,7 +153,7 @@ export function OnboardingFlow() {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} />
+                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} quota={quota} />
               </motion.div>
             )}
             {screen === "done" && (
