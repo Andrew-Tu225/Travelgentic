@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
 from app.db.database import get_db
 from app.models.models import User
@@ -51,7 +52,11 @@ async def sync_user(
         await db.refresh(user)
         logger.info(f"Created new user for clerk_id={clerk_id}")
     else:
-        logger.info(f"Existing user found for clerk_id={clerk_id}")
+        # Update timestamp to track last active
+        user.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(user)
+        logger.info(f"Existing user found for clerk_id={clerk_id}, updated_at refreshed")
 
     return UserSyncResponse(
         clerk_id=user.clerk_id,
