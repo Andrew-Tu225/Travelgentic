@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { Show, SignInButton, UserButton, useUser, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import { motion } from "framer-motion";
 
@@ -38,47 +39,7 @@ export default function Home() {
   }, [isLoaded, isSignedIn]);
   return (
     <div className="min-h-screen bg-[#100e0b] font-sans text-white">
-
-      {/* ─── Subtle Top Line ─── */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-px bg-gradient-to-r from-transparent via-[rgba(200,169,110,0.3)] to-transparent" />
-
-      {/* ─── Header ─── */}
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-white/5 bg-[rgba(16,14,11,0.8)] px-4 backdrop-blur-[10px] sm:px-6 lg:px-12">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 no-underline">
-          <span className="text-base">✈</span>
-          <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-white/50 font-sans">
-            Travelgentic
-          </span>
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-8 text-sm text-white/[0.35] md:flex">
-          <a href="#features" className="transition-colors hover:text-white/70">Features</a>
-          <a href="#onboarding" className="transition-colors hover:text-white/70">Try It</a>
-          <a href="#" className="transition-colors hover:text-white/70">Pricing</a>
-        </nav>
-
-        {/* Auth */}
-        <div className="flex items-center gap-3">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="cursor-pointer rounded-[10px] border-none bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-5 py-2 font-sans text-[13px] font-semibold text-[#1a1108] transition-all hover:from-[#d4b97a] hover:to-[#b8904f]">
-                Get Started
-              </button>
-            </SignInButton>
-          </Show>
-          <Show when="signed-in">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8",
-                },
-              }}
-            />
-          </Show>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* ─── Hero Section ─── */}
       <AuroraBackground>

@@ -30,7 +30,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#100e0b] font-sans text-white">
       <AppHeader />
 
-      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
         {/* Page title */}
         <Reveal delay={0}>
           <div className="mb-10">
