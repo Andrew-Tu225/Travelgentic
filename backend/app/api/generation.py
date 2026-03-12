@@ -66,6 +66,14 @@ async def generate_itinerary(
     if not user:
         raise HTTPException(status_code=404, detail="User not found. Please sync your account first.")
 
+    # Enforce trip limits
+    FREE_TIER_LIMIT = 5
+    if not user.is_subscribed and user.trips_generated >= FREE_TIER_LIMIT:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"You have reached the free limit of {FREE_TIER_LIMIT} trips. Please subscribe to generate more!"
+        )
+
     try:
         # Generate the itinerary
         itinerary_result = await orchestrator.generate_full_itinerary(

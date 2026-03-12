@@ -63,3 +63,25 @@ async def sync_user(
         trips_generated=user.trips_generated,
         is_subscribed=user.is_subscribed,
     )
+
+
+@router.get("/users/me", response_model=UserSyncResponse)
+async def get_current_user(
+    clerk_id: str = Depends(require_clerk_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get the current authenticated user's records.
+    Useful for checking quota balances on the frontend.
+    """
+    result = await db.execute(select(User).where(User.clerk_id == clerk_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return UserSyncResponse(
+        clerk_id=user.clerk_id,
+        trips_generated=user.trips_generated,
+        is_subscribed=user.is_subscribed,
+    )
