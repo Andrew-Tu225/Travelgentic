@@ -15,10 +15,13 @@ export default function Home() {
   const { getToken } = useAuth();
   const router = useRouter();
 
-  // Redirect signed-in users to dashboard
+  // Redirect signed-in users to dashboard (unless they are mid-onboarding)
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.replace("/dashboard");
+      const isMidOnboarding = sessionStorage.getItem("travelgentic_onboarding");
+      if (!isMidOnboarding) {
+        router.replace("/dashboard");
+      }
     }
   }, [isLoaded, isSignedIn, router]);
 

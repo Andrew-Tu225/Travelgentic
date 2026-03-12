@@ -36,8 +36,13 @@ export function OnboardingFlow() {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved && isSignedIn) {
       setData(JSON.parse(saved));
-      sessionStorage.removeItem(STORAGE_KEY);
+      // Let the user stay on Step 2 and manually click Generate when ready
       setScreen("step2");
+
+      // Scroll down to the onboarding section so the user isn't stuck at the hero section
+      setTimeout(() => {
+        document.getElementById("onboarding")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
 
       // Sync user to backend (fire-and-forget, don't block UI)
       getToken().then((token) => {
@@ -53,6 +58,8 @@ export function OnboardingFlow() {
     if (isSignedIn) {
       // Store onboarding data for the loading page to pick up
       sessionStorage.setItem("travelgentic_pending_trip", JSON.stringify(data));
+      // Clean up the onboarding flag so /dashboard intercepts work normally again later
+      sessionStorage.removeItem(STORAGE_KEY);
       router.push("/trip/loading");
     } else {
       // Save data, then open Clerk sign-in modal (same as "Get Started" button)
