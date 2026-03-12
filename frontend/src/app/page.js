@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { Show, SignInButton, UserButton, useUser, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
+import { AuroraBackground } from "@/components/ui/aurora-background";
+import { motion } from "framer-motion";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -76,32 +78,40 @@ export default function Home() {
       </header>
 
       {/* ─── Hero Section ─── */}
-      <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 py-20 text-center sm:px-6 sm:py-32 lg:py-44">
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_20%,rgba(200,169,110,0.08),transparent_70%)]" />
+      <AuroraBackground>
+        <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 py-20 text-center sm:px-6 sm:py-32 lg:py-44">
+          <motion.div
+            initial={{ opacity: 0.0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: 0.3,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+            className="relative z-10 mx-auto max-w-3xl"
+          >
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(200,169,110,0.2)] bg-[rgba(200,169,110,0.05)] px-4 py-2 sm:mb-8">
+              <span className="text-[14px]">✦</span>
+              <span className="font-sans text-[13px] text-white/50">AI-powered travel planning</span>
+            </div>
 
-        <div className="relative z-10 mx-auto max-w-3xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(200,169,110,0.2)] bg-[rgba(200,169,110,0.05)] px-4 py-2 sm:mb-8">
-            <span className="text-[14px]">✦</span>
-            <span className="font-sans text-[13px] text-white/50">AI-powered travel planning</span>
-          </div>
+            <h1 className="mb-5 font-serif text-[clamp(32px,6vw,72px)] font-bold leading-[1.1] tracking-[-0.02em] text-white">
+              Your next trip,{" "}
+              <span className="bg-gradient-to-br from-[#C8A96E] to-[#d4b97a] bg-clip-text text-transparent">
+                planned in seconds
+              </span>
+            </h1>
 
-          <h1 className="mb-5 font-serif text-[clamp(32px,6vw,72px)] font-bold leading-[1.1] tracking-[-0.02em] text-white">
-            Your next trip,{" "}
-            <span className="bg-gradient-to-br from-[#C8A96E] to-[#d4b97a] bg-clip-text text-transparent">
-              planned in seconds
-            </span>
-          </h1>
+            <p className="mx-auto mb-8 max-w-[560px] px-2 font-sans text-[clamp(15px,2vw,18px)] leading-[1.7] text-white/[0.45]">
+              Tell us where you're headed, your vibe, and budget — our AI will craft a personalized day-by-day itinerary you'll actually want to follow.
+            </p>
 
-          <p className="mx-auto mb-8 max-w-[560px] px-2 font-sans text-[clamp(15px,2vw,18px)] leading-[1.7] text-white/[0.45]">
-            Tell us where you're headed, your vibe, and budget — our AI will craft a personalized day-by-day itinerary you'll actually want to follow.
-          </p>
-
-          <a href="#onboarding" className="inline-flex rounded-xl bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-7 py-3.5 text-base font-bold tracking-[0.02em] text-[#1a1108] no-underline shadow-[0_8px_32px_rgba(200,169,110,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(200,169,110,0.3)]">
-            Start Planning →
-          </a>
-        </div>
-      </section>
+            <a href="#onboarding" className="inline-flex rounded-xl bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-7 py-3.5 text-base font-bold tracking-[0.02em] text-[#1a1108] no-underline shadow-[0_8px_32px_rgba(200,169,110,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(200,169,110,0.3)]">
+              Start Planning →
+            </a>
+          </motion.div>
+        </section>
+      </AuroraBackground>
 
       {/* ─── Features Section ─── */}
       <section id="features" className="relative px-4 py-16 sm:px-6 sm:py-24 lg:py-32">

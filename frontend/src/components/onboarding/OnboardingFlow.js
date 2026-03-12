@@ -7,6 +7,7 @@ import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
 import { CompletionScreen } from "./CompletionScreen";
+import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "travelgentic_onboarding";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -85,18 +86,59 @@ export function OnboardingFlow() {
                 {screen === "step1" ? "1" : "2"} / 2
               </span>
             </div>
-            <h1 className="mb-1 font-serif text-[24px] font-semibold leading-[1.2] text-white">
-              {TITLES[screen].h}
-            </h1>
-            <p className="text-[14px] leading-[1.5] text-white/[0.35]">
-              {TITLES[screen].sub}
-            </p>
+            <motion.div
+              key={screen}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h1 className="mb-1 font-serif text-[24px] font-semibold leading-[1.2] text-white">
+                {TITLES[screen].h}
+              </h1>
+              <p className="text-[14px] leading-[1.5] text-white/[0.35]">
+                {TITLES[screen].sub}
+              </p>
+            </motion.div>
           </div>
         )}
 
-        {screen === "step1" && <StepOne data={data} setData={setData} onNext={() => setScreen("step2")} />}
-        {screen === "step2" && <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} />}
-        {screen === "done" && <CompletionScreen destination={data.destination} />}
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {screen === "step1" && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepOne data={data} setData={setData} onNext={() => setScreen("step2")} />
+              </motion.div>
+            )}
+            {screen === "step2" && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} />
+              </motion.div>
+            )}
+            {screen === "done" && (
+              <motion.div
+                key="done"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.4 }}
+              >
+                <CompletionScreen destination={data.destination} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Cost disclaimer */}

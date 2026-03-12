@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { generateItinerary } from "@/lib/api";
+import { motion } from "framer-motion";
 
 const STAGES = [
   { label: "Analyzing your vibe", emoji: "✦", duration: 3000 },
@@ -69,7 +70,12 @@ export default function TripLoadingPage() {
       {/* Ambient glow */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_40%,rgba(200,169,110,0.1),transparent_70%)]" />
 
-      <div className="relative z-10 flex flex-col items-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative z-10 flex flex-col items-center"
+      >
         {!error ? (
           <>
             {/* Pulsing orb */}
@@ -162,7 +168,7 @@ export default function TripLoadingPage() {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

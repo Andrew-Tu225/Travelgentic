@@ -17,6 +17,17 @@
   --color-primary-hover: var(--primary-hover);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
+
+  --animate-aurora: aurora 60s linear infinite;
+
+  @keyframes aurora {
+    from {
+      background-position: 50% 50%, 50% 50%;
+    }
+    to {
+      background-position: 350% 50%, 350% 50%;
+    }
+  }
 }
 
 body {
