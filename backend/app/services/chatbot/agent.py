@@ -44,8 +44,7 @@ Keep your final reply brief (1–3 sentences)."""
 async def run_chatbot_agent(
     trip: dict[str, Any],
     itinerary: list[dict[str, Any]],
-    user_message: str,
-    *) -> dict[str, Any]:
+    user_message: str) -> dict[str, Any]:
     """
     Run the chatbot agent loop with a hard cap of MAX_ITERATIONS.
 
@@ -53,7 +52,6 @@ async def run_chatbot_agent(
         trip: Trip-level context (as shaped by /api/generation.get_trip_details, minus itinerary).
         itinerary: List of days (day_number, theme, activities).
         user_message: The latest user input for the chatbot.
-        api_key: Optional explicit Gemini API key (falls back to GEMINI_API_KEY env).
 
     Returns:
         {
