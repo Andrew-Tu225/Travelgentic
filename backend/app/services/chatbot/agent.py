@@ -45,9 +45,7 @@ async def run_chatbot_agent(
     trip: dict[str, Any],
     itinerary: list[dict[str, Any]],
     user_message: str,
-    *,
-    api_key: str | None = None,
-) -> dict[str, Any]:
+    *) -> dict[str, Any]:
     """
     Run the chatbot agent loop with a hard cap of MAX_ITERATIONS.
 
@@ -63,7 +61,8 @@ async def run_chatbot_agent(
             "itinerary": <full updated itinerary list>
         }
     """
-    client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
+    api_key = os.getenv("GEMINI_API_KEY")
+    client = genai.Client(api_key=api_key)
 
     # Initial context
     trip_header = build_trip_header(trip)

@@ -8,9 +8,10 @@ from sqlalchemy.orm import selectinload
 
 from app.services.generation_orchestrator import GenerationOrchestrator
 from app.services.llm_planning_service import TripProfileRequest
+from app.services.chatbot.agent import run_chatbot_agent
 from app.db.database import get_db
 from app.core.clerk_auth import require_clerk_user
-from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus
+from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus, CategoryTag
 
 logger = logging.getLogger(__name__)
 
@@ -200,33 +201,30 @@ async def get_trip_details(
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
-    # Sort dates by day_number
-    sorted_dates = sorted(trip.itinerary_dates, key=lambda d: d.day_number)
+    return _format_trip_response(trip)
 
-    # Format exactly like /api/generate
+
+def _format_trip_response(trip: Trip) -> dict:
+    """Build the same dict shape as get_trip_details (for reuse in chatbot)."""
+    sorted_dates = sorted(trip.itinerary_dates, key=lambda d: d.day_number)
     itinerary = []
     for d in sorted_dates:
-        # Sort activities by time_window (simplistic string sort works for HH:MM format typically, 
-        # but here we just rely on insert order or assume it's roughly sorted)
-        # Better: keep original order if possible. Since we don't have sort_order anymore, 
-        # we'll just return what's in DB.
-        activities = []
-        for a in d.activities:
-            activities.append({
+        activities = [
+            {
                 "place_name": a.place_name,
                 "place_id": a.place_id,
                 "category_tag": a.category_tag.value if a.category_tag else None,
                 "time_window": a.time_window,
                 "estimated_cost_usd": a.estimated_cost_usd,
                 "description": a.description,
-            })
-        
+            }
+            for a in d.activities
+        ]
         itinerary.append({
             "day_number": d.day_number,
             "theme": d.theme,
             "activities": activities,
         })
-
     return {
         "trip_id": str(trip.id),
         "destination": trip.destination,
@@ -237,4 +235,91 @@ async def get_trip_details(
         "budget": trip.budget,
         "trip_vibe": trip.trip_vibe,
         "itinerary": itinerary,
+    }
+
+
+class ChatbotRequest(BaseModel):
+    """Body for POST /trips/{trip_id}/chat."""
+    message: str = Field(..., min_length=1, description="User message for the itinerary chatbot.")
+
+
+@router.post("/trips/{trip_id}/chat")
+async def trip_chat(
+    trip_id: str,
+    body: ChatbotRequest,
+    clerk_id: str = Depends(require_clerk_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Send a message to the itinerary chatbot. The agent can answer questions and
+    apply changes (add/remove/modify activities). Returns a short reply and
+    the updated itinerary; changes are persisted.
+    """
+    result = await db.execute(select(User).where(User.clerk_id == clerk_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    stmt = (
+        select(Trip)
+        .where(Trip.id == trip_id, Trip.user_id == user.id)
+        .options(
+            selectinload(Trip.itinerary_dates).selectinload(ItineraryDate.activities)
+        )
+    )
+    trip_result = await db.execute(stmt)
+    trip = trip_result.scalar_one_or_none()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    trip_dict = _format_trip_response(trip)
+    itinerary = trip_dict["itinerary"]
+
+    try:
+        agent_result = await run_chatbot_agent(
+            trip=trip_dict,
+            itinerary=itinerary,
+            user_message=body.message.strip(),
+        )
+    except Exception as e:
+        logger.exception("Chatbot agent error for trip %s: %s", trip_id, e)
+        raise HTTPException(status_code=500, detail="Chatbot failed. Please try again.")
+
+    updated_itinerary = agent_result["itinerary"]
+
+    # Persist: replace all itinerary_dates and activities with the agent result
+    for idate in list(trip.itinerary_dates):
+        await db.delete(idate)
+    await db.flush()
+
+    for day_data in updated_itinerary:
+        itinerary_date = ItineraryDate(
+            trip_id=trip.id,
+            day_number=day_data["day_number"],
+            theme=day_data.get("theme"),
+        )
+        db.add(itinerary_date)
+        await db.flush()
+        for act_data in day_data.get("activities", []):
+            raw_tag = act_data.get("category_tag")
+            try:
+                category_tag = CategoryTag(raw_tag) if raw_tag else None
+            except (ValueError, TypeError):
+                category_tag = None
+            activity = Activity(
+                itinerary_date_id=itinerary_date.id,
+                place_name=act_data.get("place_name", "Unknown"),
+                place_id=act_data.get("place_id"),
+                category_tag=category_tag,
+                time_window=act_data.get("time_window"),
+                estimated_cost_usd=act_data.get("estimated_cost_usd"),
+                description=act_data.get("description"),
+            )
+            db.add(activity)
+
+    await db.commit()
+
+    return {
+        "message": agent_result["message"],
+        "itinerary": updated_itinerary,
     }
