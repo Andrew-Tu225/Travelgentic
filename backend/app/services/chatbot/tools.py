@@ -75,7 +75,7 @@ UPDATE_ITINERARY_DECLARATION = {
             },
             "fields": {
                 "type": "object",
-                "description": "For modify: only fields being changed (e.g. { \"time_window\": \"09:00–11:00\" }). For add: place_name (required), and optionally time_window, description, estimated_cost_usd, category_tag.",
+                "description": "For modify: only fields being changed. For add: place_name (required), time_window, description, estimated_cost_usd (one of: free, $1-20, $20-60, $60+), category_tag (one of: food, nature, culture, nightlife, adventure, wellness).",
             },
         },
         "required": ["operation", "day", "place_id"],

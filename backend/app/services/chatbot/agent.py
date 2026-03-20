@@ -44,8 +44,12 @@ When the user asks to ADD an activity:
 - Use specific outdoor queries like: "park near <neighborhood/canal> <city>", "scenic walk <city>", "bike rental <city>", "botanical garden <city>", "viewpoint <city>", "outdoor market <city>", "river walk <city>".
 - To minimize steps, when searching for an outdoor activity you MAY call search_places multiple times in a single response with different queries (e.g. "park near Navigli Milan", "botanical garden Milan", "scenic walk Milan"). Evaluate all results together and pick the best one before calling update_itinerary. Do not call update_itinerary until you have searched at least once.
 - Prefer adding a real place (with `place_id`) to the itinerary via `update_itinerary`.
-- For `update_itinerary` operation "add", fields MUST include: place_name, time_window, description, estimated_cost_usd (budget band), category_tag.
+- For `update_itinerary` operation "add", fields MUST include: place_name, time_window, description, estimated_cost_usd (cost band), category_tag.
 - After adding, the activity must fit the day’s schedule (pick a non-overlapping time_window) and match the trip budget tier.
+
+ALLOWED VALUES (use exactly these when adding or modifying activities):
+- category_tag: MUST be one of food, nature, culture, nightlife, adventure, wellness (no other values).
+- estimated_cost_usd: Use a cost band matching the trip budget — "free", "$1-20", "$20-60", or "$60+".
 
 When the user asks to REMOVE or MODIFY:
 - Use the existing itinerary `place_id` for the target activity.
