@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import Link from "next/link";
 import { fetchTripDetails, fetchPlacePhoto } from "@/lib/api";
 import { motion } from "framer-motion";
+import { TripChatbot } from "@/components/chatbot/TripChatbot";
 
 const CATEGORY_COLORS = {
   food: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "#f59e0b" },
@@ -188,14 +189,14 @@ export default function TripDetailsPage() {
                     {day.activities?.map((activity, actIdx) => {
                       const color = getCategoryColor(activity.category_tag);
                       const hasPlace = !!activity.place_id;
-                      
+
                       return (
                         <div
                           key={actIdx}
                           onClick={() => hasPlace && setSelectedActivity(activity)}
                           className={`group rounded-[12px] border border-white/[0.06] bg-white/[0.03] p-4 transition-all duration-200 ${
-                            hasPlace 
-                              ? "cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05]" 
+                            hasPlace
+                              ? "cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05]"
                               : "hover:bg-white/[0.04]"
                           }`}
                         >
@@ -309,6 +310,14 @@ export default function TripDetailsPage() {
           </div>
         </div>
       </div>
+
+      <TripChatbot
+        tripId={params?.id}
+        tripDestination={trip.destination}
+        onItineraryUpdate={(updatedItinerary) =>
+          setTrip((prev) => (prev ? { ...prev, itinerary: updatedItinerary } : prev))
+        }
+      />
 
       {/* Activity Image Modal */}
       {selectedActivity && (
