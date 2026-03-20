@@ -8,10 +8,10 @@ from sqlalchemy.orm import selectinload
 
 from app.services.generation_orchestrator import GenerationOrchestrator
 from app.services.llm_planning_service import TripProfileRequest
-from app.services.chatbot.agent import run_chatbot_agent
+from app.services.chatbot.service import process_chat_message
 from app.db.database import get_db
 from app.core.clerk_auth import require_clerk_user
-from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus, CategoryTag
+from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ async def generate_itinerary(
             db.add(itinerary_date)
             await db.flush()  # get itinerary_date.id
 
-            for act_data in day_data.get("activities", []):
+            for i, act_data in enumerate(day_data.get("activities", [])):
                 activity = Activity(
                     itinerary_date_id=itinerary_date.id,
                     place_name=act_data["place_name"],
@@ -115,6 +115,7 @@ async def generate_itinerary(
                     time_window=act_data.get("time_window"),
                     estimated_cost_usd=act_data.get("estimated_cost_usd"),
                     description=act_data.get("description"),
+                    sort_order=i,
                 )
                 db.add(activity)
 
@@ -238,6 +239,26 @@ def _format_trip_response(trip: Trip) -> dict:
     }
 
 
+async def _get_trip_or_404(
+    trip_id: str,
+    user: User,
+    db: AsyncSession,
+) -> Trip:
+    """Fetch trip with itinerary_dates and activities; raise 404 if not found."""
+    stmt = (
+        select(Trip)
+        .where(Trip.id == trip_id, Trip.user_id == user.id)
+        .options(
+            selectinload(Trip.itinerary_dates).selectinload(ItineraryDate.activities)
+        )
+    )
+    result = await db.execute(stmt)
+    trip = result.scalar_one_or_none()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    return trip
+
+
 class ChatbotRequest(BaseModel):
     """Body for POST /trips/{trip_id}/chat."""
     message: str = Field(..., min_length=1, description="User message for the itinerary chatbot.")
@@ -260,66 +281,15 @@ async def trip_chat(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    stmt = (
-        select(Trip)
-        .where(Trip.id == trip_id, Trip.user_id == user.id)
-        .options(
-            selectinload(Trip.itinerary_dates).selectinload(ItineraryDate.activities)
-        )
-    )
-    trip_result = await db.execute(stmt)
-    trip = trip_result.scalar_one_or_none()
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-
+    trip = await _get_trip_or_404(trip_id, user, db)
     trip_dict = _format_trip_response(trip)
-    itinerary = trip_dict["itinerary"]
 
     try:
-        agent_result = await run_chatbot_agent(
-            trip=trip_dict,
-            itinerary=itinerary,
-            user_message=body.message.strip(),
+        result = await process_chat_message(
+            trip, trip_dict, body.message.strip(), db
         )
     except Exception as e:
         logger.exception("Chatbot agent error for trip %s: %s", trip_id, e)
         raise HTTPException(status_code=500, detail="Chatbot failed. Please try again.")
 
-    updated_itinerary = agent_result["itinerary"]
-
-    # Persist: replace all itinerary_dates and activities with the agent result
-    for idate in list(trip.itinerary_dates):
-        await db.delete(idate)
-    await db.flush()
-
-    for day_data in updated_itinerary:
-        itinerary_date = ItineraryDate(
-            trip_id=trip.id,
-            day_number=day_data["day_number"],
-            theme=day_data.get("theme"),
-        )
-        db.add(itinerary_date)
-        await db.flush()
-        for act_data in day_data.get("activities", []):
-            raw_tag = act_data.get("category_tag")
-            try:
-                category_tag = CategoryTag(raw_tag) if raw_tag else None
-            except (ValueError, TypeError):
-                category_tag = None
-            activity = Activity(
-                itinerary_date_id=itinerary_date.id,
-                place_name=act_data.get("place_name", "Unknown"),
-                place_id=act_data.get("place_id"),
-                category_tag=category_tag,
-                time_window=act_data.get("time_window"),
-                estimated_cost_usd=act_data.get("estimated_cost_usd"),
-                description=act_data.get("description"),
-            )
-            db.add(activity)
-
-    await db.commit()
-
-    return {
-        "message": agent_result["message"],
-        "itinerary": updated_itinerary,
-    }
+    return {"message": result["message"], "itinerary": result["itinerary"]}

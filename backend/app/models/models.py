@@ -76,7 +76,12 @@ class ItineraryDate(Base):
     theme = Column(String(255), nullable=True)
 
     trip = relationship("Trip", back_populates="itinerary_dates")
-    activities = relationship("Activity", back_populates="itinerary_date", cascade="all, delete-orphan")
+    activities = relationship(
+        "Activity",
+        back_populates="itinerary_date",
+        cascade="all, delete-orphan",
+        order_by="Activity.sort_order",
+    )
 
 
 class Activity(Base):
@@ -90,5 +95,6 @@ class Activity(Base):
     time_window = Column(String(20), nullable=True)
     estimated_cost_usd = Column(String(20), nullable=True)
     description = Column(Text, nullable=True)
+    sort_order = Column(Integer, nullable=False, default=0)
 
     itinerary_date = relationship("ItineraryDate", back_populates="activities")

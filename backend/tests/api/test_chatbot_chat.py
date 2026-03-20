@@ -79,7 +79,7 @@ def override_get_db(mock_db_session):
 
 @pytest.fixture
 def mock_agent():
-    with patch("app.api.generation.run_chatbot_agent", new_callable=AsyncMock) as m:
+    with patch("app.services.chatbot.service.run_chatbot_agent", new_callable=AsyncMock) as m:
         m.return_value = {
             "message": "I've added a cafe to Day 2.",
             "itinerary": [
