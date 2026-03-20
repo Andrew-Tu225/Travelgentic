@@ -6,6 +6,7 @@ import copy
 import json
 import logging
 from typing import Any
+import re
 
 from app.services.places_service import search_places as _search_places
 from app.services.places_service import get_place_details as _get_place_details
@@ -90,6 +91,46 @@ TOOL_DECLARATIONS = [
 
 # ─── update_itinerary logic (pure, takes/returns itinerary list) ─────────────
 
+_TIME_WINDOW_RE = re.compile(r"(?P<h>\d{1,2}):(?P<m>\d{2})")
+
+
+def _time_window_start_minutes(time_window: str | None) -> int | None:
+    """
+    Extract start time (HH:MM) from a time_window like '09:00–11:00' or '9:00-11:00'.
+    Returns minutes from midnight, or None if not parseable.
+    """
+    if not time_window:
+        return None
+    m = _TIME_WINDOW_RE.search(time_window)
+    if not m:
+        return None
+    try:
+        h = int(m.group("h"))
+        mm = int(m.group("m"))
+    except Exception:
+        return None
+    if not (0 <= h <= 23 and 0 <= mm <= 59):
+        return None
+    return h * 60 + mm
+
+
+def _sort_activities_by_time(activities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Sort activities by start time if available; keep relative order for those without time_window.
+    """
+    with_idx = []
+    without_idx = []
+    for i, a in enumerate(activities):
+        start = _time_window_start_minutes(a.get("time_window"))
+        if start is None:
+            without_idx.append((i, a))
+        else:
+            with_idx.append((start, i, a))
+    with_idx.sort(key=lambda t: (t[0], t[1]))
+    # Put unknown times at the end, preserving original order among them.
+    return [t[2] for t in with_idx] + [t[1] for t in without_idx]
+
+
 def _apply_update_itinerary(
     operation: str,
     day: int,
@@ -140,7 +181,7 @@ def _apply_update_itinerary(
             "estimated_cost_usd": f.get("estimated_cost_usd"),
             "category_tag": f.get("category_tag"),
         }
-        day_obj["activities"] = activities + [new_activity]
+        day_obj["activities"] = _sort_activities_by_time(activities + [new_activity])
         return itinerary, f"Added {place_name} (place_id {place_id}) to Day {day}."
 
     return current_itinerary, f"Error: Unknown operation '{operation}'."
@@ -215,8 +256,18 @@ async def execute_tool(
             return {"result": "Error: day must be a number.", "updated_itinerary": current_itinerary}
         if operation not in ("add", "remove", "modify"):
             return {"result": f"Error: operation must be add, remove, or modify.", "updated_itinerary": current_itinerary}
-        if operation == "add" and (not fields or not (fields.get("place_name") or fields.get("name"))):
-            return {"result": "Error: for add, fields must include place_name or name (from search or get_place_details).", "updated_itinerary": current_itinerary}
+        if operation == "add":
+            if not fields or not (fields.get("place_name") or fields.get("name")):
+                return {"result": "Error: for add, fields must include place_name (or name).", "updated_itinerary": current_itinerary}
+            missing = []
+            for k in ("time_window", "description", "estimated_cost_usd", "category_tag"):
+                if not fields.get(k):
+                    missing.append(k)
+            if missing:
+                return {
+                    "result": f"Error: for add, fields must include {', '.join(missing)}.",
+                    "updated_itinerary": current_itinerary,
+                }
         updated, msg = _apply_update_itinerary(operation, day, place_id, fields, current_itinerary)
         return {"result": msg, "updated_itinerary": updated}
 
