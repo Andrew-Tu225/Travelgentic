@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useAuth, useClerk } from "@clerk/nextjs";
+import { fetchUserStatus } from "@/lib/api";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
 import { CompletionScreen } from "./CompletionScreen";
+import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "travelgentic_onboarding";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -28,6 +30,20 @@ export function OnboardingFlow() {
   const router = useRouter();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
+  const [quota, setQuota] = useState(null);
+
+  // Fetch quota when signed in
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      getToken()
+        .then(token => fetchUserStatus(token))
+        .then(status => setQuota({
+          isSubscribed: status.is_subscribed,
+          remaining: 5 - status.trips_generated
+        }))
+        .catch(err => console.error("Failed to fetch quota:", err));
+    }
+  }, [isLoaded, isSignedIn, getToken]);
 
   // After sign-in, restore saved onboarding data and sync user to backend
   useEffect(() => {
@@ -35,8 +51,13 @@ export function OnboardingFlow() {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved && isSignedIn) {
       setData(JSON.parse(saved));
-      sessionStorage.removeItem(STORAGE_KEY);
+      // Let the user stay on Step 2 and manually click Generate when ready
       setScreen("step2");
+
+      // Scroll down to the onboarding section so the user isn't stuck at the hero section
+      setTimeout(() => {
+        document.getElementById("onboarding")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
 
       // Sync user to backend (fire-and-forget, don't block UI)
       getToken().then((token) => {
@@ -52,6 +73,8 @@ export function OnboardingFlow() {
     if (isSignedIn) {
       // Store onboarding data for the loading page to pick up
       sessionStorage.setItem("travelgentic_pending_trip", JSON.stringify(data));
+      // Clean up the onboarding flag so /dashboard intercepts work normally again later
+      sessionStorage.removeItem(STORAGE_KEY);
       router.push("/trip/loading");
     } else {
       // Save data, then open Clerk sign-in modal (same as "Get Started" button)
@@ -81,22 +104,71 @@ export function OnboardingFlow() {
           <div className="mb-7">
             <div className="mb-3.5 flex items-center justify-between">
               <StepDots current={screen === "step1" ? 0 : 1} />
-              <span className="text-[11px] tracking-[0.05em] text-white/25">
-                {screen === "step1" ? "1" : "2"} / 2
-              </span>
+              <div className="flex items-center gap-3">
+                {quota && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-sans text-[10px] font-medium text-[#C8A96E]">
+                    <span>✦</span>
+                    {quota.isSubscribed ? "Pro" : `${Math.max(0, quota.remaining)} / 5 Credits`}
+                  </div>
+                )}
+                <span className="text-[11px] tracking-[0.05em] text-white/25">
+                  {screen === "step1" ? "1" : "2"} / 2
+                </span>
+              </div>
             </div>
-            <h1 className="mb-1 font-serif text-[24px] font-semibold leading-[1.2] text-white">
-              {TITLES[screen].h}
-            </h1>
-            <p className="text-[14px] leading-[1.5] text-white/[0.35]">
-              {TITLES[screen].sub}
-            </p>
+            <motion.div
+              key={screen}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h1 className="mb-1 font-serif text-[24px] font-semibold leading-[1.2] text-white">
+                {TITLES[screen].h}
+              </h1>
+              <p className="text-[14px] leading-[1.5] text-white/[0.35]">
+                {TITLES[screen].sub}
+              </p>
+            </motion.div>
           </div>
         )}
 
-        {screen === "step1" && <StepOne data={data} setData={setData} onNext={() => setScreen("step2")} />}
-        {screen === "step2" && <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} />}
-        {screen === "done" && <CompletionScreen destination={data.destination} />}
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {screen === "step1" && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepOne data={data} setData={setData} onNext={() => setScreen("step2")} />
+              </motion.div>
+            )}
+            {screen === "step2" && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} quota={quota} />
+              </motion.div>
+            )}
+            {screen === "done" && (
+              <motion.div
+                key="done"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.4 }}
+              >
+                <CompletionScreen destination={data.destination} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Cost disclaimer */}

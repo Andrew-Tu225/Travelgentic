@@ -9,7 +9,7 @@ export default function GeneratePage() {
     <div className="min-h-screen bg-[#100e0b] font-sans text-white">
       <AppHeader />
 
-      <main className="relative px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
+      <main className="relative px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(200,169,110,0.07),transparent_70%)]" />
 

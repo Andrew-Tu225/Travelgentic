@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { generateItinerary } from "@/lib/api";
+import { motion } from "framer-motion";
 
 const STAGES = [
   { label: "Analyzing your vibe", emoji: "✦", duration: 3000 },
@@ -56,7 +57,12 @@ export default function TripLoadingPage() {
         router.replace(`/trip/${result.trip_id}`);
       } catch (err) {
         console.error("Generation failed:", err);
-        setError(err.message || "Something went wrong");
+        // Display quota error gracefully
+        if (err.message && err.message.includes("403")) {
+           setError("You've reached your limit of 5 free trips. Please upgrade to Pro to continue unlocking infinite adventures.");
+        } else {
+           setError(err.message || "Something went wrong discovering your trip");
+        }
       }
     })();
   }, []);
@@ -69,7 +75,12 @@ export default function TripLoadingPage() {
       {/* Ambient glow */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_40%,rgba(200,169,110,0.1),transparent_70%)]" />
 
-      <div className="relative z-10 flex flex-col items-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative z-10 flex flex-col items-center"
+      >
         {!error ? (
           <>
             {/* Pulsing orb */}
@@ -135,26 +146,35 @@ export default function TripLoadingPage() {
         ) : (
           /* Error state */
           <div className="mx-auto max-w-md rounded-[18px] border border-white/[0.07] bg-white/[0.03] p-10 text-center backdrop-blur-[20px]">
-            <div className="mb-5 text-[40px]">😔</div>
+            <div className="mb-5 text-[40px]">{error.includes("upgrade to Pro") ? "🔒" : "😔"}</div>
             <h2 className="mb-2 font-serif text-[22px] font-semibold text-white">
-              Something went wrong
+              {error.includes("upgrade to Pro") ? "Free Limit Reached" : "Something went wrong"}
             </h2>
             <p className="mb-6 text-[14px] leading-[1.7] text-white/40">
               {error}
             </p>
             <div className="flex gap-3 justify-center">
+              {error.includes("upgrade to Pro") ? (
+                <button
+                  onClick={() => router.push("/pricing")}
+                  className="cursor-pointer rounded-xl bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-6 py-3 text-[14px] font-bold text-[#1a1108] border-none transition-all hover:-translate-y-0.5"
+                >
+                  Upgrade to Pro
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setError(null);
+                    setStageIdx(0);
+                    apiCalled.current = false;
+                  }}
+                  className="cursor-pointer rounded-xl bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-6 py-3 text-[14px] font-bold text-[#1a1108] border-none transition-all hover:-translate-y-0.5"
+                >
+                  Try Again
+                </button>
+              )}
               <button
-                onClick={() => {
-                  setError(null);
-                  setStageIdx(0);
-                  apiCalled.current = false;
-                }}
-                className="cursor-pointer rounded-xl bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-6 py-3 text-[14px] font-bold text-[#1a1108] border-none transition-all hover:-translate-y-0.5"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={() => router.push("/generate")}
+                onClick={() => router.push("/dashboard")}
                 className="cursor-pointer rounded-xl border-[1.5px] border-white/10 bg-transparent px-6 py-3 text-[14px] text-white/50 transition-all hover:border-white/20 hover:text-white/70"
               >
                 Go Back
@@ -162,7 +182,7 @@ export default function TripLoadingPage() {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

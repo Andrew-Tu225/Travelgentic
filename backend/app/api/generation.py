@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.services.generation_orchestrator import GenerationOrchestrator
 from app.services.llm_planning_service import TripProfileRequest
+from app.services.chatbot.service import process_chat_message
 from app.db.database import get_db
 from app.core.clerk_auth import require_clerk_user
 from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus
@@ -66,6 +67,14 @@ async def generate_itinerary(
     if not user:
         raise HTTPException(status_code=404, detail="User not found. Please sync your account first.")
 
+    # Enforce trip limits
+    FREE_TIER_LIMIT = 5
+    if not user.is_subscribed and user.trips_generated >= FREE_TIER_LIMIT:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"You have reached the free limit of {FREE_TIER_LIMIT} trips. Please subscribe to generate more!"
+        )
+
     try:
         # Generate the itinerary
         itinerary_result = await orchestrator.generate_full_itinerary(
@@ -97,7 +106,7 @@ async def generate_itinerary(
             db.add(itinerary_date)
             await db.flush()  # get itinerary_date.id
 
-            for act_data in day_data.get("activities", []):
+            for i, act_data in enumerate(day_data.get("activities", [])):
                 activity = Activity(
                     itinerary_date_id=itinerary_date.id,
                     place_name=act_data["place_name"],
@@ -106,6 +115,7 @@ async def generate_itinerary(
                     time_window=act_data.get("time_window"),
                     estimated_cost_usd=act_data.get("estimated_cost_usd"),
                     description=act_data.get("description"),
+                    sort_order=i,
                 )
                 db.add(activity)
 
@@ -192,33 +202,30 @@ async def get_trip_details(
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
-    # Sort dates by day_number
-    sorted_dates = sorted(trip.itinerary_dates, key=lambda d: d.day_number)
+    return _format_trip_response(trip)
 
-    # Format exactly like /api/generate
+
+def _format_trip_response(trip: Trip) -> dict:
+    """Build the same dict shape as get_trip_details (for reuse in chatbot)."""
+    sorted_dates = sorted(trip.itinerary_dates, key=lambda d: d.day_number)
     itinerary = []
     for d in sorted_dates:
-        # Sort activities by time_window (simplistic string sort works for HH:MM format typically, 
-        # but here we just rely on insert order or assume it's roughly sorted)
-        # Better: keep original order if possible. Since we don't have sort_order anymore, 
-        # we'll just return what's in DB.
-        activities = []
-        for a in d.activities:
-            activities.append({
+        activities = [
+            {
                 "place_name": a.place_name,
                 "place_id": a.place_id,
                 "category_tag": a.category_tag.value if a.category_tag else None,
                 "time_window": a.time_window,
                 "estimated_cost_usd": a.estimated_cost_usd,
                 "description": a.description,
-            })
-        
+            }
+            for a in d.activities
+        ]
         itinerary.append({
             "day_number": d.day_number,
             "theme": d.theme,
             "activities": activities,
         })
-
     return {
         "trip_id": str(trip.id),
         "destination": trip.destination,
@@ -230,3 +237,59 @@ async def get_trip_details(
         "trip_vibe": trip.trip_vibe,
         "itinerary": itinerary,
     }
+
+
+async def _get_trip_or_404(
+    trip_id: str,
+    user: User,
+    db: AsyncSession,
+) -> Trip:
+    """Fetch trip with itinerary_dates and activities; raise 404 if not found."""
+    stmt = (
+        select(Trip)
+        .where(Trip.id == trip_id, Trip.user_id == user.id)
+        .options(
+            selectinload(Trip.itinerary_dates).selectinload(ItineraryDate.activities)
+        )
+    )
+    result = await db.execute(stmt)
+    trip = result.scalar_one_or_none()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    return trip
+
+
+class ChatbotRequest(BaseModel):
+    """Body for POST /trips/{trip_id}/chat."""
+    message: str = Field(..., min_length=1, description="User message for the itinerary chatbot.")
+
+
+@router.post("/trips/{trip_id}/chat")
+async def trip_chat(
+    trip_id: str,
+    body: ChatbotRequest,
+    clerk_id: str = Depends(require_clerk_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Send a message to the itinerary chatbot. The agent can answer questions and
+    apply changes (add/remove/modify activities). Returns a short reply and
+    the updated itinerary; changes are persisted.
+    """
+    result = await db.execute(select(User).where(User.clerk_id == clerk_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    trip = await _get_trip_or_404(trip_id, user, db)
+    trip_dict = _format_trip_response(trip)
+
+    try:
+        result = await process_chat_message(
+            trip, trip_dict, body.message.strip(), db
+        )
+    except Exception as e:
+        logger.exception("Chatbot agent error for trip %s: %s", trip_id, e)
+        raise HTTPException(status_code=500, detail="Chatbot failed. Please try again.")
+
+    return {"message": result["message"], "itinerary": result["itinerary"]}
