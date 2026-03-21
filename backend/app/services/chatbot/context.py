@@ -28,7 +28,6 @@ def compress_day_summary(day: dict[str, Any]) -> str:
     """
     Compress a single day for prompts (e.g. add_activity target day).
     Format: "Day N [theme]: time Place A (place_id, category); ..."
-    Includes all activities. No descriptions — use get_place_details for intro/describe questions.
     """
     num = day.get("day_number", day.get("day", "?"))
     theme = day.get("theme") or ""
@@ -52,10 +51,7 @@ def compress_day_summary(day: dict[str, Any]) -> str:
 def compress_itinerary(itinerary: list[dict[str, Any]]) -> str:
     """
     Compress full itinerary into a single string for the agent.
-    Includes ALL days and ALL activities — no truncation.
     Per activity: time_window, place_name, place_id, category_tag (no description).
-    For intro/describe questions, the model should call get_place_details to fetch
-    editorial_summary etc. — more token efficient than embedding descriptions in every request.
     """
     day_lines = []
     for day in sorted(itinerary, key=lambda d: d.get("day_number", d.get("day", 0))):
