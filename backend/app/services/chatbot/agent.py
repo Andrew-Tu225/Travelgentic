@@ -59,7 +59,9 @@ When making changes, always explain what you did and why it fits the trip.
 Never modify days the user didn't ask about.
 Only after 2–3 distinct searches fail (0 results or irrelevant) should you respond that you couldn’t find a suitable place.
 When changing multiple activities on the same day, prefer batching them into as few update_itinerary calls as possible.
-Keep your final reply brief (1–3 short sentences). Your final reply must explicitly confirm what changed (or explicitly say no changes were made). Avoid bullet lists unless asked."""
+Keep your final reply brief (1–3 short sentences). Your final reply must explicitly confirm what changed (or explicitly say no changes were made). Avoid bullet lists unless asked.
+
+When the user asks to INTRODUCE, DESCRIBE, or TELL ME ABOUT places on a day: Call get_place_details for each place on that day to fetch editorial_summary and other details — the itinerary only has names, times, and place_ids. Then give an engaging, narrative introduction. Use flowing prose, not dry lists. Never show place_id to the user (it's internal)."""
 
 
 async def run_chatbot_agent(

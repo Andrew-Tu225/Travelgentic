@@ -41,7 +41,7 @@ SEARCH_PLACES_DECLARATION = {
 
 GET_PLACE_DETAILS_DECLARATION = {
     "name": "get_place_details",
-    "description": "Get detailed information about a specific place by its Google Place ID. Use after search_places when you need more info before adding or when the user asks or have questionsabout a place.",
+    "description": "Get detailed information (name, address, rating, editorial_summary, opening_hours) about a place by its Google Place ID. Use when: (1) user asks to introduce/describe places — call for each place to get rich descriptions; (2) after search_places when you need more info before adding; (3) user has questions about a specific place.",
     "parameters": {
         "type": "object",
         "properties": {

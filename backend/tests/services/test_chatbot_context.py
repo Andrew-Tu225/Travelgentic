@@ -61,11 +61,19 @@ def test_compress_itinerary_multiple_days():
     assert "X" in out and "p1" in out
 
 
-def test_compress_itinerary_respects_max_tokens():
+def test_compress_itinerary_includes_all_activities():
+    """All days and all activities are included — no truncation."""
     itinerary = [
-        {"day_number": i, "theme": f"Theme{i}", "activities": [{"place_name": f"Place{i}_{j}", "time_window": "09:00", "place_id": f"id_{i}_{j}"} for j in range(5)]}
-        for i in range(1, 10)
+        {"day_number": 1, "theme": "A", "activities": [
+            {"place_name": "Place1_0", "time_window": "09:00", "place_id": "id_1_0", "category_tag": "culture"},
+            {"place_name": "Place1_1", "time_window": "12:00", "place_id": "id_1_1", "category_tag": "food"},
+        ]},
+        {"day_number": 2, "theme": "B", "activities": [
+            {"place_name": "Place2_0", "time_window": "09:00", "place_id": "id_2_0"},
+        ]},
     ]
-    out = compress_itinerary(itinerary, max_tokens_approx=50)
-    assert len(out) <= 50 * 4 + 10  # rough cap
-    assert "..." in out or out.count("|") >= 1
+    out = compress_itinerary(itinerary)
+    assert "Day 1" in out and "Day 2" in out
+    assert "Place1_0" in out and "Place1_1" in out and "Place2_0" in out
+    assert "id_1_0" in out and "id_1_1" in out
+    assert "culture" in out and "food" in out
