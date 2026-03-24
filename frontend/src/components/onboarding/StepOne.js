@@ -66,7 +66,7 @@ export function StepOne({ data, setData, onNext }) {
         />
         <button
           onClick={() => setShowSuggest(!showSuggest)}
-          className="mt-2.5 flex items-center gap-[5px] border-none bg-transparent p-0 font-sans text-[13px] text-[#C8A96E] opacity-90 cursor-pointer hover:opacity-100"
+          className="mt-2.5 flex cursor-pointer items-center gap-[5px] border-none bg-transparent p-0 font-sans text-[13px] text-[#FF7D54] opacity-90 hover:opacity-100"
         >
           <span className="text-[14px]">✦</span>
           Not sure? Help me choose
@@ -80,19 +80,19 @@ export function StepOne({ data, setData, onNext }) {
             : "Top picks — select a month for seasonal recs";
           return (
             <div className="mt-3 flex flex-col gap-2">
-              <span className="text-[11px] tracking-[0.04em] uppercase text-white/25">
+              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748b]">
                 {label}
               </span>
               {suggestions.map((d, i) => (
                 <Reveal key={d.city} delay={i * 60}>
                   <button
                     onClick={() => { setData({ ...data, destination: `${d.city}, ${d.country}` }); setShowSuggest(false); }}
-                    className="flex w-full items-center gap-3 rounded-[10px] border-[1.5px] border-[rgba(200,169,110,0.2)] bg-[rgba(200,169,110,0.05)] p-3 text-left font-sans text-white cursor-pointer transition-colors duration-200 hover:bg-[rgba(200,169,110,0.1)]"
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-[#e2e8f0] bg-[#f8fafc] p-3 text-left font-sans text-[#001A41] transition-colors duration-200 hover:border-[#FF7D54] hover:bg-[#fff7ed]"
                   >
                     <span className="text-[26px]">{d.emoji}</span>
                     <div>
-                      <div className="text-[15px] font-semibold text-white">{d.city}, {d.country}</div>
-                      <div className="mt-0.5 text-[12px] text-white/40">{d.tag}</div>
+                      <div className="text-[15px] font-semibold text-[#001A41]">{d.city}, {d.country}</div>
+                      <div className="mt-0.5 text-[12px] text-[#64748b]">{d.tag}</div>
                     </div>
                   </button>
                 </Reveal>

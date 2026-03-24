@@ -4,10 +4,10 @@ export function StepDots({ current }) {
       {[0, 1].map(i => (
         <div key={i} className={`h-[3px] rounded-sm transition-all duration-[350ms] ease-in-out ${
           i === current
-            ? "w-7 bg-[#C8A96E]"
+            ? "w-7 bg-[#FF7D54]"
             : i < current
-              ? "w-3 bg-[rgba(200,169,110,0.4)]"
-              : "w-3 bg-white/[0.12]"
+              ? "w-3 bg-[#FF7D54]/50"
+              : "w-3 bg-[#e2e8f0]"
         }`} />
       ))}
     </div>

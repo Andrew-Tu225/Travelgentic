@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #100e0b;
-  --foreground: #ffffff;
-  --primary: #C8A96E;
-  --primary-hover: #d4b97a;
+  --background: #F8FAFC;
+  --foreground: #001A41;
+  --primary: #003580;
+  --primary-hover: #004799;
+  --accent: #FF7D54;
+  --accent-hover: #ff9568;
+  --text-muted: #64748b;
   
-  --font-sans: "DM Sans", sans-serif;
-  --font-serif: "Fraunces", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
 }
 
 @theme inline {
@@ -15,8 +17,9 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
 
   --animate-aurora: aurora 60s linear infinite;
 
@@ -31,7 +34,7 @@
 }
 
 body {
-  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(200,169,110,0.07) 0%, transparent 70%), var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
@@ -42,15 +45,15 @@ body {
   width: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(200, 169, 110, 0.2);
+  background: rgba(0, 53, 128, 0.2);
   border-radius: 4px;
 }
 
 /* ─── Clerk Theme Overrides ─── */
 /* Clerk CSS custom properties — theme at the deepest level */
 :root {
-  --clerk-font-family: 'DM Sans', sans-serif;
-  --clerk-color-primary: #C8A96E;
+  --clerk-font-family: 'Plus Jakarta Sans', sans-serif;
+  --clerk-color-primary: #FF7D54;
   --clerk-color-danger: #ef4444;
   --clerk-color-success: #22c55e;
   --clerk-color-warning: #eab308;
@@ -107,7 +110,7 @@ button[aria-label="Close"]:hover {
 }
 
 [class*="cl-footerAction"] a {
-  color: #C8A96E !important;
+  color: #FF7D54 !important;
 }
 
 /* Social / Google button */
@@ -134,6 +137,9 @@ button[aria-label="Close"]:hover {
   background-color: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #fff !important;
+}
+[class*="cl-formFieldInput"] input:focus {
+  border-color: #FF7D54 !important;
 }
 [class*="cl-formFieldInput"] input::placeholder {
   color: rgba(255, 255, 255, 0.3) !important;

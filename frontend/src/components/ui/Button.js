@@ -7,10 +7,10 @@ export function PrimaryBtn({ children, onClick, disabled }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`w-full rounded-xl p-[15px] font-sans text-[15px] font-bold tracking-[0.02em] transition-all duration-200 border-none ${
+      className={`w-full rounded-lg border-none p-4 font-sans text-[15px] font-bold tracking-[0.02em] transition-all duration-300 ${
         disabled
-          ? "cursor-not-allowed bg-[rgba(200,169,110,0.2)] text-white/25"
-          : "cursor-pointer text-[#1a1108] bg-gradient-to-br from-[#C8A96E] to-[#a87840] hover:-translate-y-[1px] hover:from-[#d4b97a] hover:to-[#b8904f] hover:shadow-[0_8px_24px_rgba(200,169,110,0.25)]"
+          ? "cursor-not-allowed bg-[#cbd5e1] text-[#64748b]"
+          : "cursor-pointer bg-[#003580] text-white hover:-translate-y-0.5 hover:bg-[#004799]"
       }`}
     >{children}</button>
   );
@@ -20,7 +20,7 @@ export function GhostBtn({ children, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="whitespace-nowrap rounded-xl border-[1.5px] border-white/[0.08] bg-transparent px-5 py-[15px] font-sans text-[15px] text-white/40 transition-colors duration-200 cursor-pointer hover:border-white/20 hover:text-white/70"
+      className="cursor-pointer whitespace-nowrap rounded-lg border-2 border-[#e2e8f0] bg-transparent px-5 py-4 font-sans text-[15px] text-[#64748b] transition-colors duration-300 hover:border-[#003580] hover:text-[#003580]"
     >{children}</button>
   );
 }

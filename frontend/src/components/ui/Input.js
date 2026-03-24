@@ -12,7 +12,7 @@ export function Input({ placeholder, value, onChange, type = "text" }) {
       placeholder={placeholder}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      className={`w-full px-4 py-[13px] rounded-[10px] border-[1.5px] bg-white/5 text-[15px] font-sans text-white outline-none box-border transition-[border-color] duration-200 placeholder:text-white/35 ${focused ? "border-[#C8A96E]" : "border-white/10"}`}
+      className={`w-full rounded-lg border-2 bg-white px-4 py-3 font-sans text-[15px] text-[#001A41] outline-none transition-[border-color] duration-200 placeholder:text-[#64748b]/60 ${focused ? "border-[#FF7D54]" : "border-[#e2e8f0]"}`}
     />
   );
 }

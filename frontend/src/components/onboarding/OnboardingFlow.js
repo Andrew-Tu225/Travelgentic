@@ -86,9 +86,9 @@ export function OnboardingFlow() {
   // Show a spinner while Clerk is loading
   if (!isLoaded) {
     return (
-      <div className="w-full max-w-[440px] rounded-[18px] border border-white/[0.07] bg-white/[0.03] p-7 sm:p-8 backdrop-blur-[20px] font-sans">
+      <div className="w-full max-w-[440px] rounded-2xl border-2 border-[#e2e8f0] bg-white p-7 shadow-lg sm:p-8 font-sans">
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 rounded-full border-2 border-[rgba(200,169,110,0.2)] border-t-[#C8A96E] animate-spin" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e2e8f0] border-t-[#FF7D54]" />
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export function OnboardingFlow() {
 
   return (
     <>
-      <div className="w-full max-w-[440px] rounded-[18px] border border-white/[0.07] bg-white/[0.03] p-7 sm:p-8 backdrop-blur-[20px] font-sans">
+      <div className="w-full max-w-[440px] rounded-2xl border-2 border-[#e2e8f0] bg-white p-7 shadow-lg sm:p-8 font-sans">
         {/* Step header */}
         {isStepMode && (
           <div className="mb-7">
@@ -106,12 +106,12 @@ export function OnboardingFlow() {
               <StepDots current={screen === "step1" ? 0 : 1} />
               <div className="flex items-center gap-3">
                 {quota && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-sans text-[10px] font-medium text-[#C8A96E]">
+                  <div className="flex items-center gap-1.5 rounded-full border border-[#7dd3fc] bg-[#f0f9ff] px-2 py-0.5 font-sans text-[10px] font-medium text-[#003580]">
                     <span>✦</span>
                     {quota.isSubscribed ? "Pro" : `${Math.max(0, quota.remaining)} / 5 Credits`}
                   </div>
                 )}
-                <span className="text-[11px] tracking-[0.05em] text-white/25">
+                <span className="text-[11px] tracking-[0.05em] text-[#64748b]">
                   {screen === "step1" ? "1" : "2"} / 2
                 </span>
               </div>
@@ -122,10 +122,10 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="mb-1 font-serif text-[24px] font-semibold leading-[1.2] text-white">
+              <h1 className="mb-1 font-sans text-[24px] font-bold leading-[1.2] text-[#003580]">
                 {TITLES[screen].h}
               </h1>
-              <p className="text-[14px] leading-[1.5] text-white/[0.35]">
+              <p className="text-[14px] leading-[1.5] text-[#64748b]">
                 {TITLES[screen].sub}
               </p>
             </motion.div>
@@ -173,7 +173,7 @@ export function OnboardingFlow() {
 
       {/* Cost disclaimer */}
       {isStepMode && (
-        <p className="mt-4 max-w-[360px] text-center font-sans text-[11px] leading-[1.6] text-white/20">
+        <p className="mt-4 max-w-[360px] text-center font-sans text-[11px] leading-[1.6] text-[#64748b]">
           Activity cost estimates only — excludes flights, hotels &amp; transport.
         </p>
       )}

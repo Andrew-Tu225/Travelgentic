@@ -3,113 +3,120 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton, SignInButton, Show, useUser, useAuth } from "@clerk/nextjs";
+import { UserButton, SignInButton, SignUpButton, Show, useUser, useAuth } from "@clerk/nextjs";
 import { fetchUserStatus } from "@/lib/api";
 
-const authenticatedLinks = [
-  { href: "/dashboard", label: "My Trips" },
-  { href: "/generate", label: "New Trip" },
-  { href: "/explore", label: "Explore" },
-  { href: "/pricing", label: "Pricing" },
+const publicNavLinks = [
+  { href: "/", label: "Home" },
+  { href: "/#onboarding", label: "My Trips", dashed: true },
+  { href: "/#destinations", label: "Destinations" },
+  { href: "/#", label: "Pricing" },
 ];
 
-const publicLinks = [
-  { href: "/#features", label: "Features" },
-  { href: "/#onboarding", label: "Try It" },
-  { href: "/pricing", label: "Pricing" },
+const authenticatedNavLinks = [
+  { href: "/", label: "Home" },
+  { href: "/dashboard", label: "My Trips", dashed: true },
+  { href: "/#destinations", label: "Destinations" },
+  { href: "/#", label: "Pricing" },
 ];
 
 export function AppHeader() {
   const pathname = usePathname();
   const { isSignedIn } = useUser();
   const { getToken } = useAuth();
-  const navLinks = isSignedIn ? authenticatedLinks : publicLinks;
+  const navLinks = isSignedIn ? authenticatedNavLinks : publicNavLinks;
 
   const [quota, setQuota] = useState(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
-    
-    // Fetch user status for the limits badge
+
     getToken()
-      .then(token => fetchUserStatus(token))
-      .then(status => {
+      .then((token) => fetchUserStatus(token))
+      .then((status) => {
         setQuota({
           isSubscribed: status.is_subscribed,
-          remaining: 5 - status.trips_generated
+          remaining: 5 - status.trips_generated,
         });
       })
-      .catch(err => console.error("Failed to fetch user quota:", err));
+      .catch((err) => console.error("Failed to fetch user quota:", err));
   }, [isSignedIn, getToken]);
 
   return (
-    <>
-      {/* Subtle Top Line */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-px bg-gradient-to-r from-transparent via-[rgba(200,169,110,0.3)] to-transparent" />
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-white/80 px-4 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] backdrop-blur-xl sm:px-6 lg:px-12">
+      {/* Logo */}
+      <Link
+        href={isSignedIn ? "/dashboard" : "/"}
+        className="flex items-center gap-2 font-sans text-lg font-bold tracking-tight text-[#003580] no-underline"
+      >
+        Travelgentic
+      </Link>
 
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-white/5 bg-[rgba(16,14,11,0.8)] px-4 backdrop-blur-[10px] sm:px-6 lg:px-12">
-        {/* Logo */}
-        <Link href={isSignedIn ? "/dashboard" : "/"} className="flex items-center gap-2 no-underline">
-          <span className="text-base">✈</span>
-          <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-white/50 font-sans">
-            Travelgentic
-          </span>
-        </Link>
+      {/* Nav */}
+      <nav className="flex items-center gap-8 text-sm">
+        {navLinks.map((link) => {
+          const isActive =
+            link.href === "/" ? pathname === "/" : pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`font-sans font-semibold no-underline transition-all duration-300 ${
+                link.dashed
+                  ? "rounded-lg border-2 border-dashed border-[#7dd3fc] px-3 py-1.5 text-[#003580] hover:border-[#38bdf8]"
+                  : isActive
+                    ? "border-b-2 border-[#FF7D54] pb-0.5 text-[#003580]"
+                    : "text-[#003580]/70 hover:text-[#003580]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-8 text-sm">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`font-sans transition-colors duration-200 no-underline ${
-                  isActive
-                    ? "text-[#C8A96E]"
-                    : "text-white/[0.35] hover:text-white/70"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Auth / Action */}
+      <div className="flex items-center gap-4">
+        <Show when="signed-out">
+          <SignInButton mode="modal">
+            <button className="cursor-pointer rounded-lg border-2 border-dashed border-[#7dd3fc] bg-transparent px-4 py-2 font-sans text-sm font-semibold text-[#003580] transition-all duration-300 hover:border-[#38bdf8]">
+              Login
+            </button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <button className="cursor-pointer rounded-lg border-none bg-[#003580] px-4 py-2 font-sans text-sm font-semibold text-white transition-all duration-300 hover:bg-[#004799]">
+              Sign Up
+            </button>
+          </SignUpButton>
+        </Show>
 
-        {/* Auth / Action */}
-        <div className="flex items-center gap-4">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="cursor-pointer rounded-[10px] border-none bg-gradient-to-br from-[#C8A96E] to-[#a87840] px-5 py-2 font-sans text-[13px] font-semibold text-[#1a1108] transition-all hover:from-[#d4b97a] hover:to-[#b8904f]">
-                Get Started
-              </button>
-            </SignInButton>
-          </Show>
-          
-          <Show when="signed-in">
-            {/* Quota Badge */}
-            {quota && (
-              <div className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-medium text-[#C8A96E] sm:flex">
-                <span className="text-[12px]">✦</span>
-                {quota.isSubscribed ? "Pro" : `${Math.max(0, quota.remaining)} / 5 Credits`}
-              </div>
-            )}
+        <Show when="signed-in">
+          {quota && (
+            <div className="hidden items-center gap-1.5 rounded-full border border-[#7dd3fc] bg-[#f0f9ff] px-2.5 py-1 font-sans text-[11px] font-medium text-[#003580] sm:flex">
+              <span className="text-[12px]">✦</span>
+              {quota.isSubscribed
+                ? "Pro"
+                : `${Math.max(0, quota.remaining)} / 5 Credits`}
+            </div>
+          )}
 
-            {pathname !== "/dashboard" && (
-              <Link href="/dashboard" className="hidden sm:block font-sans text-[13px] font-medium text-white/50 transition-colors hover:text-white/80 no-underline">
-                Dashboard &rarr;
-              </Link>
-            )}
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8",
-                },
-              }}
-            />
-          </Show>
-        </div>
-      </header>
-    </>
+          {pathname !== "/dashboard" && (
+            <Link
+              href="/dashboard"
+              className="hidden font-sans text-[13px] font-medium text-[#003580]/70 no-underline transition-colors hover:text-[#003580] sm:block"
+            >
+              Dashboard &rarr;
+            </Link>
+          )}
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+              },
+            }}
+          />
+        </Show>
+      </div>
+    </header>
   );
 }
