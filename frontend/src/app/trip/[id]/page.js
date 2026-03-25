@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -9,40 +10,40 @@ import Link from "next/link";
 import { fetchTripDetails, fetchPlacePhoto } from "@/lib/api";
 import { motion } from "framer-motion";
 import { TripChatbot } from "@/components/chatbot/TripChatbot";
+import { getDestinationImage } from "@/lib/destination-images";
+import { TripChecklist } from "@/components/trip/TripChecklist";
+import { ActivityPlaceThumbnail } from "@/components/trip/ActivityPlaceThumbnail";
 
-const CATEGORY_COLORS = {
-  food: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", text: "#f59e0b" },
-  culture: { bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.25)", text: "#a855f7" },
-  nature: { bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.25)", text: "#22c55e" },
-  nightlife: { bg: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.25)", text: "#ec4899" },
-  adventure: { bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.25)", text: "#f97316" },
-  wellness: { bg: "rgba(20,184,166,0.12)", border: "rgba(20,184,166,0.25)", text: "#14b8a6" },
-  history: { bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", text: "#8b5cf6" },
-  shopping: { bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.25)", text: "#f472b6" },
+const CATEGORY_STYLES = {
+  food: "bg-amber-50 text-amber-800 border-amber-200",
+  culture: "bg-purple-50 text-purple-800 border-purple-200",
+  nature: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  nightlife: "bg-pink-50 text-pink-800 border-pink-200",
+  adventure: "bg-orange-50 text-orange-800 border-orange-200",
+  wellness: "bg-teal-50 text-teal-800 border-teal-200",
+  history: "bg-violet-50 text-violet-800 border-violet-200",
+  shopping: "bg-rose-50 text-rose-800 border-rose-200",
 };
 
-const DEFAULT_COLOR = { bg: "rgba(200,169,110,0.12)", border: "rgba(200,169,110,0.25)", text: "#C8A96E" };
+const DEFAULT_TAG = "bg-[#f1f5f9] text-[#003580] border-[#e2e8f0]";
 
-function getCategoryColor(tag) {
-  return CATEGORY_COLORS[tag?.toLowerCase()] || DEFAULT_COLOR;
+function getTagClass(tag) {
+  return CATEGORY_STYLES[tag?.toLowerCase()] || DEFAULT_TAG;
 }
 
 export default function TripDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState(null);
 
-  // Modal state
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [photoUrl, setPhotoUrl] = useState(null);
-  const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
-
     (async () => {
       try {
         const token = await getToken();
@@ -54,14 +55,18 @@ export default function TripDetailsPage() {
         setError("Could not load trip details.");
       }
     })();
-  }, [params?.id]);
+  }, [params?.id, getToken]);
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#100e0b] text-white">
-        <div className="text-center">
-          <p className="mb-4 text-white/50">{error}</p>
-          <button onClick={() => router.push("/dashboard")} className="text-[#C8A96E] hover:underline">
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4">
+        <div className="max-w-md rounded-2xl border border-[#e2e8f0] bg-white p-8 text-center shadow-sm">
+          <p className="mb-4 font-sans text-[#64748b]">{error}</p>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="font-sans text-sm font-semibold text-[#003580] underline hover:text-[#FF7D54]"
+          >
             Return to Dashboard
           </button>
         </div>
@@ -71,243 +76,223 @@ export default function TripDetailsPage() {
 
   if (!trip) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#100e0b]">
-        <div className="h-8 w-8 rounded-full border-2 border-[rgba(200,169,110,0.2)] border-t-[#C8A96E] animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e2e8f0] border-t-[#FF7D54]" />
       </div>
     );
   }
+
+  const city = trip.destination?.split(",")[0]?.trim() || "Destination";
+  const heroTitle = `${trip.duration_days} Days in ${city}`;
+  const tripId = trip.trip_id || params?.id;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen bg-[#100e0b] font-sans text-white pb-32"
+      className="min-h-screen bg-[#F8FAFC] pb-36 font-sans text-[#001A41]"
     >
       <AppHeader />
 
-      {/* ─── Light/Glow Background Effects ─── */}
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(200,169,110,0.15),transparent_70%)]" />
-      {/* Trip header */}
-      <div className="border-b border-white/5 px-4 py-8 sm:px-6 sm:py-10 lg:px-12">
-        <div className="mx-auto max-w-7xl">
-          <Reveal delay={0}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="mb-2 font-sans text-[11px] font-medium uppercase tracking-[0.12em] text-white/40">
-                  Your Itinerary
-                </p>
-                <h1 className="font-serif text-[clamp(28px,5vw,42px)] font-bold leading-[1.1]">
-                  <span className="bg-gradient-to-br from-[#C8A96E] to-[#d4b97a] bg-clip-text text-transparent">
-                    {trip.destination}
-                  </span>
-                </h1>
-                <p className="mt-2 max-w-xl text-[14px] leading-[1.7] text-white/40">
+      {/* Full-width hero */}
+      <Reveal delay={0}>
+        <div className="relative mb-8 w-full overflow-hidden sm:mb-10">
+          <div className="relative min-h-[min(52vh,640px)] w-full sm:min-h-[min(56vh,720px)] lg:min-h-[min(58vh,780px)]">
+            <Image
+              src={getDestinationImage(trip.destination)}
+              alt={trip.destination || "Trip"}
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 w-full pb-6 pl-3 pr-4 pt-20 text-left sm:pb-10 sm:pl-4 sm:pr-5 sm:pt-24 md:pl-5 lg:pl-6">
+            <div className="flex w-full max-w-3xl flex-col items-start text-left">
+              <div className="mb-3 flex flex-wrap items-center justify-start gap-3">
+                <span className="rounded-full bg-[#f5e6dc] px-3 py-1.5 font-sans text-[11px] font-bold uppercase tracking-wider text-[#5c4033]">
+                  {trip.duration_days} days itinerary
+                </span>
+                {trip.month ? (
+                  <span className="font-sans text-[13px] text-white/90">{trip.month}</span>
+                ) : null}
+              </div>
+              <h1 className="mb-2 w-full font-sans text-[clamp(26px,5vw,40px)] font-bold leading-tight text-white">
+                {heroTitle}
+              </h1>
+              {trip.trip_vibe ? (
+                <p className="max-w-2xl font-sans text-[15px] leading-relaxed text-white/90">
                   {trip.trip_vibe}
                 </p>
-              </div>
-
-              {/* Meta badges */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: trip.month, icon: "📅" },
-                  { label: `${trip.duration_days} days`, icon: "⏱" },
-                  { label: trip.budget, icon: "💰" },
-                ].map((badge) => (
-                  <span
-                    key={badge.label}
-                    className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50"
-                  >
-                    <span>{badge.icon}</span> {badge.label}
-                  </span>
-                ))}
-              </div>
+              ) : null}
             </div>
-          </Reveal>
-
-          {/* Actions */}
-          <Reveal delay={60}>
-            <div className="mt-6 flex gap-3">
-              <Link
-                href="/generate"
-                className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-white/10 bg-transparent px-4 py-2.5 text-[13px] text-white/50 no-underline transition-all hover:border-white/20 hover:text-white/70"
-              >
-                ✦ New Trip
-              </Link>
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-white/10 bg-transparent px-4 py-2.5 text-[13px] text-white/50 no-underline transition-all hover:border-white/20 hover:text-white/70"
-              >
-                ← My Trips
-              </Link>
-            </div>
-          </Reveal>
+          </div>
         </div>
-      </div>
+      </Reveal>
 
-      {/* Day navigation pills (mobile) */}
-      <div className="block md:hidden border-b border-white/5 px-4 py-3 overflow-x-auto">
-        <div className="flex gap-2">
+      <div className="mx-auto max-w-6xl pl-3 pr-4 sm:pl-4 sm:pr-6 lg:pl-4 lg:pr-8">
+        {/* Secondary nav */}
+        <div className="mb-8 flex flex-wrap gap-3">
+          <Link
+            href="/dashboard"
+            className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 font-sans text-sm font-medium text-[#003580] no-underline shadow-sm transition-colors hover:border-[#cbd5e1]"
+          >
+            ← Dashboard
+          </Link>
+          <Link
+            href="/generate"
+            className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 font-sans text-sm font-medium text-[#003580] no-underline shadow-sm transition-colors hover:border-[#cbd5e1]"
+          >
+            New Trip
+          </Link>
+        </div>
+
+        {/* Mobile day pills */}
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden">
           {trip.itinerary.map((day) => (
             <a
               key={day.day_number}
               href={`#day-${day.day_number}`}
-              className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50 no-underline transition-all hover:border-[rgba(200,169,110,0.3)] hover:text-[#C8A96E]"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#e2e8f0] bg-white px-3 py-1.5 font-sans text-[12px] text-[#64748b] no-underline shadow-sm"
             >
-              <span className="font-semibold text-[#C8A96E]">{day.day_number}</span>
+              <span className="font-semibold text-[#FF7D54]">{day.day_number}</span>
               <span className="max-w-[100px] truncate">{day.theme}</span>
             </a>
           ))}
         </div>
-      </div>
 
-      {/* Day columns */}
-      <div className="px-4 py-8 sm:px-6 sm:py-10 lg:px-12">
-        <div className="mx-auto max-w-7xl">
-          {/* Desktop: horizontal scroll */}
-          <div className="hidden md:flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory">
-            {trip.itinerary.map((day, dayIdx) => (
-              <Reveal key={day.day_number} delay={dayIdx * 80}>
-                <div className="w-[320px] min-w-[320px] snap-start flex-shrink-0 rounded-[16px] border border-white/[0.07] bg-white/[0.02] backdrop-blur-[8px]">
-                  {/* Day header */}
-                  <div className="border-b border-white/[0.06] p-5">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#C8A96E] text-[12px] font-bold text-[#C8A96E]">
-                        {day.day_number}
-                      </span>
-                      <span className="text-[11px] text-white/25">
-                        {day.activities?.length || 0} activities
-                      </span>
-                    </div>
-                    <h3 className="font-serif text-[16px] font-semibold text-white leading-[1.3]">
-                      {day.theme}
-                    </h3>
-                  </div>
+        {/* Main grid: schedule + checklist */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_min(100%,320px)] lg:gap-10 xl:grid-cols-[1fr_340px]">
+          <div className="min-w-0">
+            <div className="mb-8">
+              <h2 className="font-sans text-2xl font-bold text-[#003580]">
+                Your Journey Schedule
+              </h2>
+              {trip.month ? (
+                <p className="mt-1 font-sans text-sm text-[#64748b]">{trip.month}</p>
+              ) : null}
+            </div>
 
-                  {/* Activity cards */}
-                  <div className="flex flex-col gap-3 p-4">
-                    {day.activities?.map((activity, actIdx) => {
-                      const color = getCategoryColor(activity.category_tag);
-                      const hasPlace = !!activity.place_id;
+            <div className="relative">
+              {/* Continuous spine — centered in the left rail */}
+              <div
+                className="pointer-events-none absolute bottom-0 left-[11px] top-2 w-px -translate-x-1/2 bg-[#e2e8f0] sm:left-[13px]"
+                aria-hidden
+              />
 
-                      return (
-                        <div
-                          key={actIdx}
-                          onClick={() => hasPlace && setSelectedActivity(activity)}
-                          className={`group rounded-[12px] border border-white/[0.06] bg-white/[0.03] p-4 transition-all duration-200 ${
-                            hasPlace
-                              ? "cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05]"
-                              : "hover:bg-white/[0.04]"
-                          }`}
-                        >
-                          <div className="mb-2.5 flex items-center justify-between">
-                            <span className="text-[12px] font-medium text-white/50">
-                              {activity.time_window}
-                            </span>
-                            <span
-                              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                              style={{
-                                backgroundColor: color.bg,
-                                border: `1px solid ${color.border}`,
-                                color: color.text,
-                              }}
-                            >
-                              {activity.category_tag}
-                            </span>
-                          </div>
-                          <h4 className="mb-1.5 text-[14px] font-semibold text-white leading-[1.3]">
-                            {activity.place_name}
-                          </h4>
-                          <p className="mb-3 text-[12px] leading-[1.6] text-white/35">
-                            {activity.description}
-                          </p>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] text-white/25">💰</span>
-                            <span className="text-[11px] text-white/30">
-                              {activity.estimated_cost_usd}
-                            </span>
-                          </div>
+              <div className="relative flex flex-col gap-12 sm:gap-14">
+              {trip.itinerary.map((day, dayIdx) => {
+                const isFirst = dayIdx === 0;
+
+                return (
+                  <Reveal key={day.day_number} delay={dayIdx * 40}>
+                    <div
+                      id={`day-${day.day_number}`}
+                      className="relative scroll-mt-24"
+                    >
+                      <div className="flex gap-3 sm:gap-4">
+                        <div className="relative z-[1] flex w-[22px] shrink-0 flex-col items-center pt-1.5 sm:w-[26px] sm:pt-2">
+                          <div
+                            className={`ring-4 ring-[#F8FAFC] ${
+                              isFirst
+                                ? "h-3 w-3 rounded-full border-[3px] border-[#FF7D54] bg-[#FF7D54] shadow-[0_0_0_1px_rgba(255,125,84,0.25)] sm:h-3.5 sm:w-3.5"
+                                : "h-2.5 w-2.5 rounded-full border-2 border-[#cbd5e1] bg-white sm:h-3 sm:w-3"
+                            }`}
+                            aria-hidden
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-3 sm:mb-4">
+                            <h3 className="font-sans text-lg font-bold leading-snug text-[#003580]">
+                              Day {day.day_number}: {day.theme}
+                            </h3>
+                          </div>
+
+                      {!day.activities?.length ? (
+                        <p className="rounded-xl border border-dashed border-[#e2e8f0] bg-white/80 px-4 py-3 font-sans text-sm text-[#64748b]">
+                          Upcoming activity schedule being finalized by your travel assistant…
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          {day.activities.map((activity, actIdx) => {
+                            const hasPlace = !!activity.place_id;
+                            const tagClass = getTagClass(activity.category_tag);
+
+                            return (
+                              <div
+                                key={actIdx}
+                                role={hasPlace ? "button" : undefined}
+                                tabIndex={hasPlace ? 0 : undefined}
+                                onClick={() => hasPlace && setSelectedActivity(activity)}
+                                onKeyDown={(e) => {
+                                  if (hasPlace && (e.key === "Enter" || e.key === " ")) {
+                                    e.preventDefault();
+                                    setSelectedActivity(activity);
+                                  }
+                                }}
+                                className={`flex gap-4 rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm transition-shadow ${
+                                  hasPlace
+                                    ? "cursor-pointer hover:border-[#cbd5e1] hover:shadow-md"
+                                    : ""
+                                }`}
+                              >
+                                <ActivityPlaceThumbnail
+                                  placeId={activity.place_id}
+                                  getToken={getToken}
+                                  alt={activity.place_name}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="mb-1 flex items-start justify-between gap-2">
+                                    <span className="font-sans text-[13px] font-semibold text-[#FF7D54]">
+                                      {activity.time_window}
+                                    </span>
+                                    <span className="text-[#64748b]" aria-hidden>
+                                      {activity.category_tag === "food" ? "🍴" : "👁"}
+                                    </span>
+                                  </div>
+                                  <h4 className="mb-1 font-sans text-base font-bold text-[#003580]">
+                                    {activity.place_name}
+                                  </h4>
+                                  <p className="mb-3 font-sans text-[13px] leading-relaxed text-[#64748b]">
+                                    {activity.description}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {activity.category_tag ? (
+                                      <span
+                                        className={`rounded-full border px-2.5 py-0.5 font-sans text-[11px] font-medium ${tagClass}`}
+                                      >
+                                        {activity.category_tag}
+                                      </span>
+                                    ) : null}
+                                    {activity.estimated_cost_usd ? (
+                                      <span className="rounded-full border border-[#e2e8f0] bg-[#f8fafc] px-2.5 py-0.5 font-sans text-[11px] font-medium text-[#64748b]">
+                                        {activity.estimated_cost_usd}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+              </div>
+            </div>
           </div>
 
-          {/* Mobile: vertical stack */}
-          <div className="flex flex-col gap-6 md:hidden">
-            {trip.itinerary.map((day, dayIdx) => (
-              <Reveal key={day.day_number} delay={dayIdx * 60}>
-                <div
-                  id={`day-${day.day_number}`}
-                  className="scroll-mt-20 rounded-[16px] border border-white/[0.07] bg-white/[0.02] backdrop-blur-[8px]"
-                >
-                  {/* Day header */}
-                  <div className="border-b border-white/[0.06] p-5">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#C8A96E] text-[12px] font-bold text-[#C8A96E]">
-                        {day.day_number}
-                      </span>
-                      <span className="text-[11px] text-white/25">
-                        {day.activities?.length || 0} activities
-                      </span>
-                    </div>
-                    <h3 className="font-serif text-[16px] font-semibold text-white leading-[1.3]">
-                      {day.theme}
-                    </h3>
-                  </div>
-
-                  {/* Activity cards */}
-                  <div className="flex flex-col gap-3 p-4">
-                    {day.activities?.map((activity, actIdx) => {
-                      const color = getCategoryColor(activity.category_tag);
-                      const hasPlace = !!activity.place_id;
-
-                      return (
-                        <div
-                          key={actIdx}
-                          onClick={() => hasPlace && setSelectedActivity(activity)}
-                          className={`rounded-[12px] border border-white/[0.06] bg-white/[0.03] p-4 transition-all duration-200 ${
-                            hasPlace ? "cursor-pointer hover:bg-white/[0.05]" : ""
-                          }`}
-                        >
-                          <div className="mb-2.5 flex items-center justify-between">
-                            <span className="text-[12px] font-medium text-white/50">
-                              {activity.time_window}
-                            </span>
-                            <span
-                              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                              style={{
-                                backgroundColor: color.bg,
-                                border: `1px solid ${color.border}`,
-                                color: color.text,
-                              }}
-                            >
-                              {activity.category_tag}
-                            </span>
-                          </div>
-                          <h4 className="mb-1.5 text-[14px] font-semibold text-white leading-[1.3]">
-                            {activity.place_name}
-                          </h4>
-                          <p className="mb-3 text-[12px] leading-[1.6] text-white/35">
-                            {activity.description}
-                          </p>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] text-white/25">💰</span>
-                            <span className="text-[11px] text-white/30">
-                              {activity.estimated_cost_usd}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <aside className="flex flex-col gap-6">
+            <TripChecklist tripId={tripId} userId={userId} />
+          </aside>
         </div>
       </div>
 
@@ -319,75 +304,74 @@ export default function TripDetailsPage() {
         }
       />
 
-      {/* Activity Image Modal */}
       {selectedActivity && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
           onClick={() => {
             setSelectedActivity(null);
             setPhotoUrl(null);
             setPhotoError(false);
           }}
         >
-          <div 
-            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-y-auto overflow-x-hidden rounded-[24px] border border-white/10 bg-[#151310] shadow-2xl"
+          <div
+            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-y-auto overflow-x-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
-            <button 
+            <button
+              type="button"
               onClick={() => {
                 setSelectedActivity(null);
                 setPhotoUrl(null);
                 setPhotoError(false);
               }}
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 backdrop-blur-md transition-colors hover:bg-black/60 hover:text-white"
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f5f9] text-[#64748b] transition-colors hover:bg-[#e2e8f0]"
+              aria-label="Close"
             >
               ✕
             </button>
 
-            {/* Image Area */}
-            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-white/[0.02]">
-              <PhotoFetcher 
-                placeId={selectedActivity.place_id} 
+            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-[#f1f5f9]">
+              <PhotoFetcher
+                placeId={selectedActivity.place_id}
                 tokenFn={getToken}
                 onLoad={setPhotoUrl}
                 onError={() => setPhotoError(true)}
               />
-              
+
               {photoUrl ? (
-                <img 
-                  src={photoUrl} 
+                // eslint-disable-next-line @next/next/no-img-element -- blob URL
+                <img
+                  src={photoUrl}
                   alt={selectedActivity.place_name}
                   className="h-full w-full object-cover"
                 />
               ) : photoError ? (
-                <div className="flex h-full w-full flex-col items-center justify-center text-white/30">
+                <div className="flex h-full w-full flex-col items-center justify-center text-[#64748b]">
                   <span className="mb-2 text-3xl">🏜️</span>
                   <span className="text-sm">No photo available</span>
                 </div>
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <div className="h-6 w-6 rounded-full border-2 border-[rgba(200,169,110,0.2)] border-t-[#C8A96E] animate-spin" />
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e2e8f0] border-t-[#FF7D54]" />
                 </div>
               )}
             </div>
 
-            {/* Details Area */}
             <div className="flex flex-col gap-3 p-6 pb-8">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70">
+                <span className="rounded-full bg-[#fff7ed] px-2.5 py-1 font-sans text-[11px] font-medium text-[#003580]">
                   {selectedActivity.time_window}
                 </span>
-                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 flex items-center gap-1">
-                  💰 {selectedActivity.estimated_cost_usd}
+                <span className="rounded-full bg-[#f1f5f9] px-2.5 py-1 font-sans text-[11px] font-medium text-[#64748b]">
+                  {selectedActivity.estimated_cost_usd}
                 </span>
               </div>
-              
-              <h3 className="font-serif text-[22px] font-bold text-white leading-[1.2]">
+
+              <h3 className="font-sans text-[22px] font-bold leading-tight text-[#003580]">
                 {selectedActivity.place_name}
               </h3>
-              
-              <p className="text-[14px] leading-[1.6] text-white/60">
+
+              <p className="font-sans text-[14px] leading-relaxed text-[#64748b]">
                 {selectedActivity.description}
               </p>
             </div>
@@ -398,7 +382,6 @@ export default function TripDetailsPage() {
   );
 }
 
-// Inner component to handle async fetching without blocking the modal render
 function PhotoFetcher({ placeId, tokenFn, onLoad, onError }) {
   useEffect(() => {
     let active = true;
@@ -407,12 +390,14 @@ function PhotoFetcher({ placeId, tokenFn, onLoad, onError }) {
         const token = await tokenFn();
         const url = await fetchPlacePhoto(placeId, token);
         if (active) onLoad(url);
-      } catch (err) {
+      } catch {
         if (active) onError();
       }
     })();
-    return () => { active = false; };
-  }, [placeId]);
+    return () => {
+      active = false;
+    };
+  }, [placeId, tokenFn]);
 
   return null;
 }

@@ -212,7 +212,7 @@ export default function DashboardPage() {
                       <div className="border-t border-[#e2e8f0] pt-4">
                         <div className="mb-1.5 flex items-center justify-between">
                           <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
-                            Budget Status
+                            Budget Stat3us
                           </span>
                           <span className="font-sans text-[12px] font-semibold text-[#FF7D54]">
                             {statusInfo.label}
