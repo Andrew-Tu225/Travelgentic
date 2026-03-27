@@ -174,7 +174,7 @@ export default function DashboardPage() {
                     {/* Card image */}
                     <div className="relative h-40 overflow-hidden">
                       <Image
-                        src={getDestinationImage(trip.destination)}
+                        src={trip.city_image_url || getDestinationImage(trip.destination)}
                         alt={trip.destination || "Trip"}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"

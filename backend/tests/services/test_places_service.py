@@ -1,7 +1,12 @@
 import pytest
 import httpx
-from unittest.mock import patch, MagicMock
-from app.services.places_service import search_places, get_place_details, get_place_photos
+from unittest.mock import patch, MagicMock, AsyncMock
+from app.services.places_service import (
+    search_places,
+    get_place_details,
+    get_place_photos,
+    get_city_image_url,
+)
 
 # Valid Eiffel Tower Place ID for testing
 TEST_PLACE_ID = "ChIJLU7jZClu5kcR4PcOOO6p3I0"
@@ -136,3 +141,50 @@ async def test_get_place_photos_invalid_id():
     
     # Because details will be invalid, photos should safely return empty list
     assert urls == []
+
+
+@pytest.mark.asyncio
+async def test_get_city_image_url_empty_destination():
+    assert await get_city_image_url("") is None
+    assert await get_city_image_url(None) is None
+
+
+@pytest.mark.asyncio
+@patch("app.services.places_service.get_place_photos", new_callable=AsyncMock)
+@patch("app.services.places_service.search_places", new_callable=AsyncMock)
+async def test_get_city_image_url_returns_first_photo(mock_search, mock_photos):
+    mock_search.return_value = {
+        "status": "OK",
+        "results": [{"place_id": "ChIJcity123", "name": "Test City"}],
+    }
+    mock_photos.return_value = [
+        "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=a&key=k",
+        "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=b&key=k",
+    ]
+
+    url = await get_city_image_url("Lisbon, Portugal")
+
+    mock_search.assert_called_once()
+    call_kw = mock_search.call_args.kwargs
+    assert "Lisbon" in call_kw["query"] and "city" in call_kw["query"]
+    mock_photos.assert_called_once_with(place_id="ChIJcity123", max_width=1200)
+    assert url == mock_photos.return_value[0]
+
+
+@pytest.mark.asyncio
+@patch("app.services.places_service.search_places", new_callable=AsyncMock)
+async def test_get_city_image_url_search_not_ok(mock_search):
+    mock_search.return_value = {"status": "ZERO_RESULTS", "results": []}
+    assert await get_city_image_url("Nowhere") is None
+
+
+@pytest.mark.asyncio
+@patch("app.services.places_service.get_place_photos", new_callable=AsyncMock)
+@patch("app.services.places_service.search_places", new_callable=AsyncMock)
+async def test_get_city_image_url_no_photos(mock_search, mock_photos):
+    mock_search.return_value = {
+        "status": "OK",
+        "results": [{"place_id": "ChIJx", "name": "X"}],
+    }
+    mock_photos.return_value = []
+    assert await get_city_image_url("X") is None

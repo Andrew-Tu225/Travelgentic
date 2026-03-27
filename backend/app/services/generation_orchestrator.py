@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from app.services.llm_planning_service import LLMPlanningService, TripProfileRequest, ActivityPattern
 from app.services.llm_scheduling_service import LLMSchedulingService, DailySchedule
-from app.services.places_service import search_places
+from app.services.places_service import search_places, get_city_image_url
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +97,7 @@ class GenerationOrchestrator:
             daily_schedules.append(schedule.model_dump())
             
         logger.info("Orchestration complete.")
+        city_image_url = await get_city_image_url(destination)
         
         # Clean up the output payload for frontend API consumption
         clean_itinerary = []
@@ -115,5 +116,6 @@ class GenerationOrchestrator:
             "duration_days": duration_days,
             "budget": trip_request.budget,
             "trip_vibe": profile.trip_vibe,
+            "city_image_url": city_image_url,
             "itinerary": clean_itinerary
         }

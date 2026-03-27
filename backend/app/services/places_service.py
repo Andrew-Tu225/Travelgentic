@@ -171,3 +171,38 @@ async def get_place_photos(place_id: str, max_width: int = 400) -> List[str]:
     except Exception as e:
         logger.error(f"An unexpected error occurred while processing photos for place_id {place_id}: {str(e)}")
         return []
+
+
+async def get_city_image_url(destination: str, max_width: int = 1200) -> Optional[str]:
+    """
+    Resolve a representative city image URL from Google Places.
+
+    This is best-effort and should not block itinerary generation if it fails.
+    """
+    if not destination:
+        return None
+
+    try:
+        # Query as a city destination first to avoid attraction-specific bias.
+        search_result = await search_places(query=f"{destination} city")
+        if search_result.get("status") != "OK":
+            logger.info(
+                "City image lookup returned non-OK status for '%s': %s",
+                destination,
+                search_result.get("status"),
+            )
+            return None
+
+        candidates = search_result.get("results", [])
+        if not candidates:
+            return None
+
+        place_id = candidates[0].get("place_id")
+        if not place_id:
+            return None
+
+        photos = await get_place_photos(place_id=place_id, max_width=max_width)
+        return photos[0] if photos else None
+    except Exception as e:
+        logger.warning("City image lookup failed for '%s': %s", destination, str(e))
+        return None

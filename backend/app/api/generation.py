@@ -92,6 +92,7 @@ async def generate_itinerary(
             duration_days=itinerary_result["duration_days"],
             budget=itinerary_result.get("budget"),
             trip_vibe=itinerary_result.get("trip_vibe"),
+            city_image_url=itinerary_result.get("city_image_url"),
             status=TripStatus.ready,
         )
         db.add(trip)
@@ -166,6 +167,7 @@ async def list_trips(
             "duration_days": t.duration_days,
             "budget": t.budget,
             "trip_vibe": t.trip_vibe,
+            "city_image_url": t.city_image_url,
             "status": t.status.value if t.status else None,
             "created_at": t.created_at.isoformat() if t.created_at else None,
         }
@@ -235,6 +237,7 @@ def _format_trip_response(trip: Trip) -> dict:
         "duration_days": trip.duration_days,
         "budget": trip.budget,
         "trip_vibe": trip.trip_vibe,
+        "city_image_url": trip.city_image_url,
         "itinerary": itinerary,
     }
 

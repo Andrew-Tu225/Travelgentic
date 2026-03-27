@@ -100,7 +100,7 @@ export default function TripDetailsPage() {
         <div className="relative mb-8 w-full overflow-hidden sm:mb-10">
           <div className="relative min-h-[min(52vh,640px)] w-full sm:min-h-[min(56vh,720px)] lg:min-h-[min(58vh,780px)]">
             <Image
-              src={getDestinationImage(trip.destination)}
+              src={trip.city_image_url || getDestinationImage(trip.destination)}
               alt={trip.destination || "Trip"}
               fill
               className="object-cover"

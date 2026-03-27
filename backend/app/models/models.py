@@ -59,6 +59,7 @@ class Trip(Base):
     duration_days = Column(Integer, nullable=False)
     budget = Column(String(20), nullable=True)
     trip_vibe = Column(Text, nullable=True)
+    city_image_url = Column(Text, nullable=True)
     share_token = Column(String(12), unique=True, nullable=True)
     status = Column(Enum(TripStatus), nullable=False, default=TripStatus.generating)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
