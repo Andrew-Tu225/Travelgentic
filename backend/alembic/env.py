@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -9,13 +10,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from dotenv import load_dotenv
 
-# Make backend/ importable
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-load_dotenv()
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_BACKEND_ROOT))
+load_dotenv(_BACKEND_ROOT / ".env")
 
 import app.models.models as models  # registers all models with Base
-from app.db.database import Base
+from app.db.database import Base, DATABASE_URL
 
 config = context.config
 if config.config_file_name is not None:
@@ -25,7 +25,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = os.getenv("DATABASE_URL")
+    url = DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -43,7 +43,7 @@ def do_run_migrations(connection):
 
 
 async def run_migrations_online() -> None:
-    url = os.getenv("DATABASE_URL")
+    url = DATABASE_URL
     connectable = create_async_engine(url, poolclass=pool.NullPool)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
