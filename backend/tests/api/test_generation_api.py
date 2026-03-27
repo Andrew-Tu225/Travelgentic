@@ -10,7 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.api.generation import get_db, require_clerk_user, _format_trip_response
+from app.api.generation import get_db, require_clerk_user
+from app.repositories.trip_repository import format_trip_response
 
 
 @pytest.fixture
@@ -167,7 +168,7 @@ def test_format_trip_response_includes_city_image_url():
     trip.city_image_url = "https://example.com/city.jpg"
     trip.itinerary_dates = []
 
-    out = _format_trip_response(trip)
+    out = format_trip_response(trip)
     assert out["city_image_url"] == "https://example.com/city.jpg"
     assert out["trip_id"] == str(trip.id)
     assert out["destination"] == "Paris, France"
