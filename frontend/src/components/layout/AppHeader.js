@@ -10,14 +10,12 @@ const publicNavLinks = [
   { href: "/", label: "Home" },
   { href: "/#onboarding", label: "My Trips", dashed: true },
   { href: "/#destinations", label: "Destinations" },
-  { href: "/#", label: "Pricing" },
 ];
 
 const authenticatedNavLinks = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "My Trips", dashed: true },
   { href: "/#destinations", label: "Destinations" },
-  { href: "/#", label: "Pricing" },
 ];
 
 function NavLink({ link, pathname, onNavigate, className = "" }) {

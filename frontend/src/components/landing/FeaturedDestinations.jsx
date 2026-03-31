@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 
 const DESTINATIONS = [
   {
-    href: "/destinations/bali",
+    url: "https://en.wikipedia.org/wiki/Bali",
     title: "Bali, Indonesia",
     subtitle: "Spiritual retreats & pristine shores.",
     image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=2072",
@@ -14,7 +13,7 @@ const DESTINATIONS = [
     rowSpan: 2,
   },
   {
-    href: "/destinations/kyoto",
+    url: "https://en.wikipedia.org/wiki/Kyoto",
     title: "Kyoto, Japan",
     subtitle: "Timeless tradition meets neon nights.",
     image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070",
@@ -22,7 +21,7 @@ const DESTINATIONS = [
     rowSpan: 1,
   },
   {
-    href: "/destinations/santorini",
+    url: "https://en.wikipedia.org/wiki/Santorini",
     title: "Santorini",
     subtitle: null,
     image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=2032",
@@ -30,7 +29,7 @@ const DESTINATIONS = [
     rowSpan: 1,
   },
   {
-    href: "/destinations/venice",
+    url: "https://en.wikipedia.org/wiki/Venice",
     title: "Venice",
     subtitle: null,
     image: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=2083",
@@ -42,31 +41,22 @@ const DESTINATIONS = [
 export function FeaturedDestinations() {
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-10 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-sans text-[clamp(28px,4vw,36px)] font-bold text-[#003580]">
-            Featured Destinations
-          </h2>
-          <p className="mt-1 font-sans text-[15px] text-[#64748b]">
-            Curated by our expert editorial team and AI insights.
-          </p>
-        </div>
-        <Link
-          href="/destinations"
-          className="mt-4 inline-flex items-center gap-1 font-sans text-sm font-semibold text-[#003580] no-underline transition-colors hover:text-[#FF7D54] sm:mt-0"
-        >
-          View All
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+      <div className="mb-10">
+        <h2 className="font-sans text-[clamp(28px,4vw,36px)] font-bold text-[#003580]">
+          Featured Destinations
+        </h2>
+        <p className="mt-1 font-sans text-[15px] text-[#64748b]">
+          Curated by our expert editorial team and AI insights.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:min-h-[400px] sm:grid-cols-4 sm:grid-rows-2">
-        {DESTINATIONS.map((dest, i) => (
-          <Link
-            key={dest.href}
-            href={dest.href}
+        {DESTINATIONS.map((dest) => (
+          <a
+            key={dest.url}
+            href={dest.url}
+            target="_blank"
+            rel="noopener noreferrer"
             className="group relative min-h-[200px] overflow-hidden rounded-2xl transition-transform duration-300 hover:scale-[1.02] sm:min-h-[240px]"
             style={{
               gridColumn: `span ${dest.colSpan}`,
@@ -97,7 +87,7 @@ export function FeaturedDestinations() {
                 <p className="mt-0.5 font-sans text-sm text-white/90">{dest.subtitle}</p>
               )}
             </div>
-          </Link>
+          </a>
         ))}
       </div>
     </div>

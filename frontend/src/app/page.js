@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUser, useAuth } from "@clerk/nextjs";
-import Link from "next/link";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { FeaturedDestinations } from "@/components/landing/FeaturedDestinations";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -172,63 +171,9 @@ export default function Home() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-[#e2e8f0] bg-[#F8FAFC] px-4 py-16 sm:px-6 lg:px-12">
-        <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-3">
-          <div>
-            <h3 className="mb-3 font-sans text-lg font-bold text-[#003580]">Travelgentic</h3>
-            <p className="mb-4 font-sans text-sm leading-[1.6] text-[#64748b]">
-              Your digital concierge for a more meaningful way to see the world.
-            </p>
-            <div className="flex gap-4">
-              <span className="text-[#64748b] hover:text-[#003580]">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0h.5a2.5 2.5 0 002.5-2.5V3.935M12 12a2 2 0 104 0 2 2 0 00-4 0z" />
-                </svg>
-              </span>
-              <span className="text-[#64748b] hover:text-[#003580]">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </span>
-              <span className="text-[#64748b] hover:text-[#003580]">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                </svg>
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="mb-4 font-sans text-xs font-bold uppercase tracking-wider text-[#003580]">
-              Discover
-            </h4>
-            <ul className="space-y-2 font-sans text-sm text-[#64748b]">
-              <li><Link href="/about" className="no-underline hover:text-[#003580]">About Us</Link></li>
-              <li><Link href="/contact" className="no-underline hover:text-[#003580]">Contact</Link></li>
-              <li><Link href="/privacy" className="no-underline hover:text-[#003580]">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="no-underline hover:text-[#003580]">Terms of Service</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-4 font-sans text-xs font-bold uppercase tracking-wider text-[#003580]">
-              Connect
-            </h4>
-            <a
-              href="https://x.com/travelgentic"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mb-4 inline-flex text-[#64748b] transition-colors hover:text-[#003580]"
-              aria-label="Follow us on X"
-            >
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <p className="font-sans text-sm text-[#64748b]">
-              © 2026 Travelgentic
-            </p>
-          </div>
+      <footer className="border-t border-[#e2e8f0] bg-[#F8FAFC] px-4 py-10 sm:px-6 lg:px-12">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="font-sans text-sm text-[#64748b]">2026 Travelgentic</p>
         </div>
       </footer>
     </div>
