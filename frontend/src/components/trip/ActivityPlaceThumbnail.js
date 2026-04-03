@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchPlacePhoto } from "@/lib/api";
 
-export function ActivityPlaceThumbnail({ placeId, getToken, alt }) {
+export function ActivityPlaceThumbnail({ placeId, alt }) {
   const [url, setUrl] = useState(null);
   const [err, setErr] = useState(false);
 
@@ -12,9 +12,7 @@ export function ActivityPlaceThumbnail({ placeId, getToken, alt }) {
     let active = true;
     (async () => {
       try {
-        const token = await getToken();
-        if (!token) return;
-        const u = await fetchPlacePhoto(placeId, token);
+        const u = await fetchPlacePhoto(placeId);
         if (active) setUrl(u);
       } catch {
         if (active) setErr(true);
@@ -23,7 +21,7 @@ export function ActivityPlaceThumbnail({ placeId, getToken, alt }) {
     return () => {
       active = false;
     };
-  }, [placeId, getToken]);
+  }, [placeId]);
 
   if (err || !placeId) {
     return (

@@ -10,4 +10,3 @@ alembic
 python-dotenv
 pytest
 pytest-asyncio
-PyJWT[crypto]

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useAuth, useClerk } from "@clerk/nextjs";
-import { fetchUserStatus } from "@/lib/api";
 import { StepDots } from "@/components/ui/StepIndicator";
 import { StepOne } from "./StepOne";
 import { StepTwo } from "./StepTwo";
@@ -11,7 +9,6 @@ import { CompletionScreen } from "./CompletionScreen";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "travelgentic_onboarding";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const defaultData = {
   destination: "", origin: "", month: "", duration: "",
@@ -24,75 +21,15 @@ const TITLES = {
 };
 
 export function OnboardingFlow() {
-  const { isSignedIn, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const clerk = useClerk();
   const router = useRouter();
   const [screen, setScreen] = useState("step1");
   const [data, setData] = useState(defaultData);
-  const [quota, setQuota] = useState(null);
-
-  // Fetch quota when signed in
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      getToken()
-        .then(token => fetchUserStatus(token))
-        .then(status => setQuota({
-          isSubscribed: status.is_subscribed,
-          remaining: 5 - status.trips_generated
-        }))
-        .catch(err => console.error("Failed to fetch quota:", err));
-    }
-  }, [isLoaded, isSignedIn, getToken]);
-
-  // After sign-in, restore saved onboarding data and sync user to backend
-  useEffect(() => {
-    if (!isLoaded) return;
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved && isSignedIn) {
-      setData(JSON.parse(saved));
-      // Let the user stay on Step 2 and manually click Generate when ready
-      setScreen("step2");
-
-      // Scroll down to the onboarding section so the user isn't stuck at the hero section
-      setTimeout(() => {
-        document.getElementById("onboarding")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-
-      // Sync user to backend (fire-and-forget, don't block UI)
-      getToken().then((token) => {
-        fetch(`${API_BASE}/api/users/sync`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }).catch((err) => console.error("User sync failed:", err));
-      });
-    }
-  }, [isLoaded, isSignedIn]);
 
   const handleGenerate = () => {
-    if (isSignedIn) {
-      // Store onboarding data for the loading page to pick up
-      sessionStorage.setItem("travelgentic_pending_trip", JSON.stringify(data));
-      // Clean up the onboarding flag so /dashboard intercepts work normally again later
-      sessionStorage.removeItem(STORAGE_KEY);
-      router.push("/trip/loading");
-    } else {
-      // Save data, then open Clerk sign-in modal (same as "Get Started" button)
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      clerk.openSignIn();
-    }
+    sessionStorage.setItem("travelgentic_pending_trip", JSON.stringify(data));
+    sessionStorage.removeItem(STORAGE_KEY);
+    router.push("/trip/loading");
   };
-
-  // Show a spinner while Clerk is loading
-  if (!isLoaded) {
-    return (
-      <div className="w-full max-w-[440px] rounded-2xl border-2 border-[#e2e8f0] bg-white p-7 shadow-lg sm:p-8 font-sans">
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e2e8f0] border-t-[#FF7D54]" />
-        </div>
-      </div>
-    );
-  }
 
   const isStepMode = screen === "step1" || screen === "step2";
 
@@ -104,17 +41,9 @@ export function OnboardingFlow() {
           <div className="mb-7">
             <div className="mb-3.5 flex items-center justify-between">
               <StepDots current={screen === "step1" ? 0 : 1} />
-              <div className="flex items-center gap-3">
-                {quota && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-[#7dd3fc] bg-[#f0f9ff] px-2 py-0.5 font-sans text-[10px] font-medium text-[#003580]">
-                    <span>✦</span>
-                    {quota.isSubscribed ? "Pro" : `${Math.max(0, quota.remaining)} / 5 Credits`}
-                  </div>
-                )}
-                <span className="text-[11px] tracking-[0.05em] text-[#64748b]">
-                  {screen === "step1" ? "1" : "2"} / 2
-                </span>
-              </div>
+              <span className="text-[11px] tracking-[0.05em] text-[#64748b]">
+                {screen === "step1" ? "1" : "2"} / 2
+              </span>
             </div>
             <motion.div
               key={screen}
@@ -153,7 +82,7 @@ export function OnboardingFlow() {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} quota={quota} />
+                <StepTwo data={data} setData={setData} onGenerate={handleGenerate} onBack={() => setScreen("step1")} quota={null} />
               </motion.div>
             )}
             {screen === "done" && (

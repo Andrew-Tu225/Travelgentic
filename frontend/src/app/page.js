@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useUser, useAuth } from "@clerk/nextjs";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { FeaturedDestinations } from "@/components/landing/FeaturedDestinations";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { motion } from "framer-motion";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const HOW_IT_WORKS = [
   {
@@ -48,29 +43,6 @@ const HOW_IT_WORKS = [
 ];
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      const isMidOnboarding = sessionStorage.getItem("travelgentic_onboarding");
-      if (!isMidOnboarding) {
-        router.replace("/dashboard");
-      }
-    }
-  }, [isLoaded, isSignedIn, router]);
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    getToken().then((token) => {
-      fetch(`${API_BASE}/api/users/sync`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch((err) => console.error("User sync failed:", err));
-    });
-  }, [isLoaded, isSignedIn, getToken]);
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-[#001A41]">
       <AppHeader />

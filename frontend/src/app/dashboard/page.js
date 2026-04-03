@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth, useUser } from "@clerk/nextjs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { fetchTrips } from "@/lib/api";
 import { getDestinationImage } from "@/lib/destination-images";
@@ -49,21 +48,17 @@ function getFriendlyTitle(destination, tripVibe) {
 }
 
 export default function DashboardPage() {
-  const { getToken } = useAuth();
-  const { user } = useUser();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAllTrips, setShowAllTrips] = useState(false);
 
-  const firstName = user?.firstName || "Traveler";
   const displayTrips = trips.length > 4 && !showAllTrips ? trips.slice(0, 4) : trips;
   const hasMoreTrips = trips.length > 4;
 
   useEffect(() => {
     (async () => {
       try {
-        const token = await getToken();
-        const data = await fetchTrips(token);
+        const data = await fetchTrips();
         setTrips(data);
       } catch (err) {
         console.error("Failed to fetch trips:", err);
@@ -71,7 +66,7 @@ export default function DashboardPage() {
         setLoading(false);
       }
     })();
-  }, [getToken]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-[#001A41]">
@@ -82,7 +77,7 @@ export default function DashboardPage() {
         <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-1 font-sans text-[11px] font-semibold uppercase tracking-[0.15em] text-[#FF7D54]">
-              {getGreeting().toUpperCase()}, {firstName.toUpperCase()}
+              {getGreeting().toUpperCase()}
             </p>
             <h1 className="mb-2 font-sans text-[clamp(28px,5vw,40px)] font-bold leading-[1.15] text-[#003580]">
               Welcome back to the horizon.
@@ -212,7 +207,7 @@ export default function DashboardPage() {
                       <div className="border-t border-[#e2e8f0] pt-4">
                         <div className="mb-1.5 flex items-center justify-between">
                           <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
-                            Budget Stat3us
+                            Budget Status
                           </span>
                           <span className="font-sans text-[12px] font-semibold text-[#FF7D54]">
                             {statusInfo.label}

@@ -1,18 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton, SignInButton, SignUpButton, Show, useUser, useAuth } from "@clerk/nextjs";
-import { fetchUserStatus } from "@/lib/api";
 
-const publicNavLinks = [
-  { href: "/", label: "Home" },
-  { href: "/#onboarding", label: "My Trips", dashed: true },
-  { href: "/#destinations", label: "Destinations" },
-];
-
-const authenticatedNavLinks = [
+const navLinks = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "My Trips", dashed: true },
   { href: "/#destinations", label: "Destinations" },
@@ -39,52 +31,15 @@ function NavLink({ link, pathname, onNavigate, className = "" }) {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { isSignedIn } = useUser();
-  const { getToken } = useAuth();
-  const navLinks = isSignedIn ? authenticatedNavLinks : publicNavLinks;
-
-  const [quota, setQuota] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-
-    getToken()
-      .then((token) => fetchUserStatus(token))
-      .then((status) => {
-        setQuota({
-          isSubscribed: status.is_subscribed,
-          remaining: 5 - status.trips_generated,
-        });
-      })
-      .catch((err) => console.error("Failed to fetch user quota:", err));
-  }, [isSignedIn, getToken]);
-
-  useEffect(() => {
-    closeMobile();
-  }, [pathname, closeMobile]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") closeMobile();
-    };
-    window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [mobileOpen, closeMobile]);
 
   return (
     <>
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-white/80 px-4 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] backdrop-blur-xl sm:px-6 lg:px-12">
         <Link
-          href={isSignedIn ? "/dashboard" : "/"}
+          href="/"
           className="flex shrink-0 items-center gap-2 font-sans text-lg font-bold tracking-tight text-[#003580] no-underline"
         >
           Travelgentic
@@ -97,61 +52,14 @@ export function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="md:hidden rounded-lg px-2 py-1.5 font-sans text-sm font-semibold text-[#003580] hover:bg-[#f1f5f9]"
-              >
-                Log in
-              </button>
-            </SignInButton>
-            <div className="hidden items-center gap-2 sm:gap-3 md:flex">
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="cursor-pointer rounded-lg border-2 border-dashed border-[#7dd3fc] bg-transparent px-3 py-2 font-sans text-sm font-semibold text-[#003580] transition-all duration-300 hover:border-[#38bdf8] sm:px-4"
-                >
-                  Login
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button
-                  type="button"
-                  className="cursor-pointer rounded-lg border-none bg-[#003580] px-3 py-2 font-sans text-sm font-semibold text-white transition-all duration-300 hover:bg-[#004799] sm:px-4"
-                >
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </div>
-          </Show>
-
-          <Show when="signed-in">
-            {quota && (
-              <div className="hidden items-center gap-1.5 rounded-full border border-[#7dd3fc] bg-[#f0f9ff] px-2.5 py-1 font-sans text-[11px] font-medium text-[#003580] sm:flex">
-                <span className="text-[12px]">✦</span>
-                {quota.isSubscribed
-                  ? "Pro"
-                  : `${Math.max(0, quota.remaining)} / 5 Credits`}
-              </div>
-            )}
-
-            {pathname !== "/dashboard" && (
-              <Link
-                href="/dashboard"
-                className="hidden font-sans text-[13px] font-medium text-[#003580]/70 no-underline transition-colors hover:text-[#003580] md:block"
-              >
-                Dashboard &rarr;
-              </Link>
-            )}
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8",
-                },
-              }}
-            />
-          </Show>
+          {pathname !== "/dashboard" && (
+            <Link
+              href="/dashboard"
+              className="hidden font-sans text-[13px] font-medium text-[#003580]/70 no-underline transition-colors hover:text-[#003580] md:block"
+            >
+              Dashboard &rarr;
+            </Link>
+          )}
 
           <button
             type="button"
@@ -200,53 +108,6 @@ export function AppHeader() {
                 />
               ))}
             </nav>
-
-            <div className="border-t border-[#e2e8f0] px-4 py-4">
-              <Show when="signed-out">
-                <div className="flex flex-col gap-3">
-                  <SignInButton mode="modal">
-                    <button
-                      type="button"
-                      onClick={closeMobile}
-                      className="w-full cursor-pointer rounded-lg border-2 border-dashed border-[#7dd3fc] bg-transparent py-3 font-sans text-sm font-semibold text-[#003580] transition-all hover:border-[#38bdf8]"
-                    >
-                      Login
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button
-                      type="button"
-                      onClick={closeMobile}
-                      className="w-full cursor-pointer rounded-lg border-none bg-[#003580] py-3 font-sans text-sm font-semibold text-white hover:bg-[#004799]"
-                    >
-                      Sign Up
-                    </button>
-                  </SignUpButton>
-                </div>
-              </Show>
-
-              <Show when="signed-in">
-                <div className="flex flex-col gap-4">
-                  {quota && (
-                    <div className="flex items-center justify-center gap-1.5 rounded-full border border-[#7dd3fc] bg-[#f0f9ff] px-3 py-2 font-sans text-xs font-medium text-[#003580]">
-                      <span>✦</span>
-                      {quota.isSubscribed
-                        ? "Pro"
-                        : `${Math.max(0, quota.remaining)} / 5 Credits`}
-                    </div>
-                  )}
-                  {pathname !== "/dashboard" && (
-                    <Link
-                      href="/dashboard"
-                      onClick={closeMobile}
-                      className="text-center font-sans text-sm font-medium text-[#003580] no-underline underline-offset-2 hover:underline"
-                    >
-                      Dashboard &rarr;
-                    </Link>
-                  )}
-                </div>
-              </Show>
-            </div>
           </div>
         </div>
       ) : null}

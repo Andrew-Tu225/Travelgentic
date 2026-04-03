@@ -10,28 +10,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.api.generation import get_db, require_clerk_user
+from app.api.generation import get_db
 from app.repositories.trip_repository import format_trip_response
 
 
 @pytest.fixture
-def mock_clerk():
-    app.dependency_overrides[require_clerk_user] = lambda: "test-clerk-id"
-    yield
-    app.dependency_overrides.pop(require_clerk_user, None)
-
-
-@pytest.fixture
-def mock_user():
-    u = MagicMock()
-    u.id = uuid.uuid4()
-    u.is_subscribed = False
-    u.trips_generated = 0
-    return u
-
-
-@pytest.fixture
-def mock_db_session(mock_user):
+def mock_db_session():
     """Async session that assigns UUIDs on flush so Trip persistence succeeds."""
     added = []
 
@@ -40,11 +24,8 @@ def mock_db_session(mock_user):
             if hasattr(obj, "id") and getattr(obj, "id", None) is None:
                 obj.id = uuid.uuid4()
 
-    user_result = MagicMock()
-    user_result.scalar_one_or_none = MagicMock(return_value=mock_user)
-
     session = MagicMock()
-    session.execute = AsyncMock(return_value=user_result)
+    session.execute = AsyncMock()
     session.add = MagicMock(side_effect=lambda o: added.append(o))
     session.flush = AsyncMock(side_effect=flush_impl)
     session.commit = AsyncMock()
@@ -92,7 +73,7 @@ def mock_orchestrator():
         app.dependency_overrides.pop(get_orchestrator, None)
 
 
-def test_generate_itinerary_endpoint(mock_clerk, override_get_db, mock_orchestrator):
+def test_generate_itinerary_endpoint(override_get_db, mock_orchestrator):
     payload = {
         "destination": "Test City",
         "origin": "New York",
@@ -104,11 +85,7 @@ def test_generate_itinerary_endpoint(mock_clerk, override_get_db, mock_orchestra
     }
 
     client = TestClient(app)
-    response = client.post(
-        "/api/generate",
-        json=payload,
-        headers={"Authorization": "Bearer test-token"},
-    )
+    response = client.post("/api/generate", json=payload)
 
     if response.status_code != 200:
         print(f"FAILED WITH {response.status_code}: {response.text}")
@@ -132,26 +109,6 @@ def test_generate_itinerary_endpoint(mock_clerk, override_get_db, mock_orchestra
     assert call_kwargs["trip_request"].purpose == "A quick testing trip"
     assert call_kwargs["trip_request"].budget == "mid"
     assert call_kwargs["trip_request"].origin == "New York"
-
-
-def test_generate_itinerary_401_without_auth(override_get_db, mock_orchestrator):
-    if require_clerk_user in app.dependency_overrides:
-        app.dependency_overrides.pop(require_clerk_user, None)
-
-    client = TestClient(app)
-    response = client.post(
-        "/api/generate",
-        json={
-            "destination": "Test City",
-            "origin": "New York",
-            "month": "April",
-            "duration_days": 1,
-            "purpose": "test",
-            "budget": "mid",
-            "interests": ["x"],
-        },
-    )
-    assert response.status_code == 401
 
 
 def test_format_trip_response_includes_city_image_url():

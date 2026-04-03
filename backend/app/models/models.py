@@ -3,7 +3,7 @@ import enum
 from datetime import datetime, date
 from sqlalchemy import (
     Column, String, Integer, Text, Date, DateTime,
-    ForeignKey, Enum, Boolean
+    ForeignKey, Enum
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -34,24 +34,10 @@ class CategoryTag(str, enum.Enum):
 
 # ── Models ─────────────────────────────────────────────
 
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    clerk_id = Column(String(255), unique=True, nullable=False)
-    trips_generated = Column(Integer, default=0, nullable=False)
-    is_subscribed = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
-
-    trips = relationship("Trip", back_populates="user")
-
-
 class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     destination = Column(String(255), nullable=False)
     origin = Column(String(255), nullable=True)
     month = Column(String(20), nullable=True)
@@ -64,7 +50,6 @@ class Trip(Base):
     status = Column(Enum(TripStatus), nullable=False, default=TripStatus.generating)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    user = relationship("User", back_populates="trips")
     itinerary_dates = relationship("ItineraryDate", back_populates="trip", cascade="all, delete-orphan")
 
 

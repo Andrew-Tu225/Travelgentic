@@ -9,14 +9,11 @@ from app.services.generation_orchestrator import GenerationOrchestrator
 from app.services.llm_planning_service import TripProfileRequest
 from app.services.chatbot.service import process_chat_message
 from app.db.database import get_db
-from app.core.clerk_auth import require_clerk_user
 from app.repositories import trip_repository
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-FREE_TIER_LIMIT = 5
 
 
 def get_orchestrator() -> GenerationOrchestrator:
@@ -51,7 +48,6 @@ def _derive_start_date(month: str) -> str:
 @router.post("/generate")
 async def generate_itinerary(
     request: GenerateItineraryRequest,
-    clerk_id: str = Depends(require_clerk_user),
     db: AsyncSession = Depends(get_db),
     orchestrator: GenerationOrchestrator = Depends(get_orchestrator),
 ):
@@ -60,19 +56,9 @@ async def generate_itinerary(
     """
     start_date = _derive_start_date(request.month)
     logger.info(
-        f"Received API request from {clerk_id} to generate itinerary for {request.destination} "
+        f"Received API request to generate itinerary for {request.destination} "
         f"({request.duration_days} days, {request.month} → {start_date})"
     )
-
-    user = await trip_repository.get_user_by_clerk_id(db, clerk_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found. Please sync your account first.")
-
-    if not user.is_subscribed and user.trips_generated >= FREE_TIER_LIMIT:
-        raise HTTPException(
-            status_code=403,
-            detail=f"You have reached the free limit of {FREE_TIER_LIMIT} trips. Please subscribe to generate more!",
-        )
 
     try:
         itinerary_result = await orchestrator.generate_full_itinerary(
@@ -80,8 +66,8 @@ async def generate_itinerary(
             start_date=start_date,
         )
 
-        trip = await trip_repository.persist_generated_itinerary(db, user, itinerary_result)
-        logger.info(f"Saved trip {trip.id} for user {clerk_id}")
+        trip = await trip_repository.persist_generated_itinerary(db, itinerary_result)
+        logger.info(f"Saved trip {trip.id}")
 
         itinerary_result["trip_id"] = str(trip.id)
         return itinerary_result
@@ -97,34 +83,24 @@ async def generate_itinerary(
 
 @router.get("/trips")
 async def list_trips(
-    clerk_id: str = Depends(require_clerk_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Fetch all trips for the authenticated user, ordered by most recent first.
+    Fetch all trips, ordered by most recent first.
     """
-    user = await trip_repository.get_user_by_clerk_id(db, clerk_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    trips = await trip_repository.list_trips_for_user(db, user.id)
+    trips = await trip_repository.list_all_trips(db)
     return [trip_repository.trip_to_list_item_dict(t) for t in trips]
 
 
 @router.get("/trips/{trip_id}")
 async def get_trip_details(
     trip_id: str,
-    clerk_id: str = Depends(require_clerk_user),
     db=Depends(get_db),
 ):
     """
     Fetch full details of a specific trip, shaped exactly like the /generate response.
     """
-    user = await trip_repository.get_user_by_clerk_id(db, clerk_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    trip = await trip_repository.get_trip_with_itinerary_for_user(db, trip_id, user.id)
+    trip = await trip_repository.get_trip_with_itinerary(db, trip_id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
@@ -140,7 +116,6 @@ class ChatbotRequest(BaseModel):
 async def trip_chat(
     trip_id: str,
     body: ChatbotRequest,
-    clerk_id: str = Depends(require_clerk_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -148,11 +123,7 @@ async def trip_chat(
     apply changes (add/remove/modify activities). Returns a short reply and
     the updated itinerary; changes are persisted.
     """
-    user = await trip_repository.get_user_by_clerk_id(db, clerk_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    trip = await trip_repository.get_trip_with_itinerary_for_user(db, trip_id, user.id)
+    trip = await trip_repository.get_trip_with_itinerary(db, trip_id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 

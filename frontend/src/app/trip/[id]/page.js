@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import Link from "next/link";
@@ -34,7 +33,6 @@ function getTagClass(tag) {
 export default function TripDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const { getToken, userId } = useAuth();
   const [trip, setTrip] = useState(null);
   const [error, setError] = useState(null);
 
@@ -46,16 +44,14 @@ export default function TripDetailsPage() {
     if (!params?.id) return;
     (async () => {
       try {
-        const token = await getToken();
-        if (!token) return;
-        const data = await fetchTripDetails(params.id, token);
+        const data = await fetchTripDetails(params.id);
         setTrip(data);
       } catch (err) {
         console.error("Failed to load trip:", err);
         setError("Could not load trip details.");
       }
     })();
-  }, [params?.id, getToken]);
+  }, [params?.id]);
 
   if (error) {
     return (
@@ -242,7 +238,6 @@ export default function TripDetailsPage() {
                               >
                                 <ActivityPlaceThumbnail
                                   placeId={activity.place_id}
-                                  getToken={getToken}
                                   alt={activity.place_name}
                                 />
                                 <div className="min-w-0 flex-1">
@@ -291,7 +286,7 @@ export default function TripDetailsPage() {
           </div>
 
           <aside className="flex flex-col gap-6">
-            <TripChecklist tripId={tripId} userId={userId} />
+            <TripChecklist tripId={tripId} />
           </aside>
         </div>
       </div>
@@ -333,7 +328,6 @@ export default function TripDetailsPage() {
             <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-[#f1f5f9]">
               <PhotoFetcher
                 placeId={selectedActivity.place_id}
-                tokenFn={getToken}
                 onLoad={setPhotoUrl}
                 onError={() => setPhotoError(true)}
               />
@@ -382,13 +376,12 @@ export default function TripDetailsPage() {
   );
 }
 
-function PhotoFetcher({ placeId, tokenFn, onLoad, onError }) {
+function PhotoFetcher({ placeId, onLoad, onError }) {
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const token = await tokenFn();
-        const url = await fetchPlacePhoto(placeId, token);
+        const url = await fetchPlacePhoto(placeId);
         if (active) onLoad(url);
       } catch {
         if (active) onError();
@@ -397,7 +390,7 @@ function PhotoFetcher({ placeId, tokenFn, onLoad, onError }) {
     return () => {
       active = false;
     };
-  }, [placeId, tokenFn]);
+  }, [placeId]);
 
   return null;
 }

@@ -29,7 +29,7 @@ Trip generation is orchestrated on the **FastAPI** backend (`GenerationOrchestra
 3. **Gemini — scheduling (LLM call 2, per day)**  
    The **LLM scheduling service** turns those candidates into a chronological day plan: time windows, short descriptions, category tags, and cost bands—only using places from the fetched list.
 
-The result is persisted (PostgreSQL via SQLAlchemy) and returned to the frontend. Authenticated routes use **Clerk JWT** validation against your **`CLERK_ISSUER`** (see [Environment](#environment)).
+The result is persisted (PostgreSQL via SQLAlchemy) and returned to the frontend.
 
 ---
 
@@ -45,8 +45,7 @@ The **chatbot** runs on **`POST /api/trips/{trip_id}/chat`**. A **Gemini** agent
 Travelgentic/
 ├── backend/                 # FastAPI API, orchestration, LLM & Places services
 │   ├── app/
-│   │   ├── api/             # HTTP routes (generation, trips, chat, users, places)
-│   │   ├── core/            # Clerk JWT verification
+│   │   ├── api/             # HTTP routes (generation, trips, chat, places)
 │   │   ├── db/              # Async SQLAlchemy + session
 │   │   ├── models/          # ORM models
 │   │   ├── repositories/    # Trip / itinerary persistence
@@ -56,10 +55,9 @@ Travelgentic/
 │   └── Dockerfile
 ├── frontend/                # Next.js App Router UI
 │   ├── src/
-│   │   ├── app/             # Pages (landing, dashboard, trip view, auth)
+│   │   ├── app/             # Pages (landing, dashboard, trip view)
 │   │   ├── components/      # Landing, onboarding, trip UI, etc.
-│   │   ├── lib/             # API client helpers
-│   │   └── middleware.js    # Clerk route protection
+│   │   └── lib/             # API client helpers
 │   └── package.json
 ├── docs/                    # Extra docs and README assets
 └── docker-compose.yml       # Optional backend container (loads backend/.env)
@@ -76,16 +74,12 @@ Create **two** local env files (they are gitignored). Never commit real secrets.
 | Variable | Purpose |
 | -------- | ------- |
 | `GEMINI_API_KEY` | Google AI (Gemini) for planning, scheduling, and the chatbot agent |
-| `GOOGLE_PLACE_API` | Google Places API key (used as `GOOGLE_PLACE_API` in code—enable Places / relevant APIs in Google Cloud) |
-| `CLERK_ISSUER` | Clerk Frontend API URL, e.g. `https://YOUR_INSTANCE.clerk.accounts.dev` — used to fetch JWKS and validate access tokens |
+| `GOOGLE_PLACE_API` | Google Places API key (enable Places / relevant APIs in Google Cloud) |
 | `SUPABASE_DATABASE_URL` | Async PostgreSQL URL for SQLAlchemy (e.g. Supabase connection string) |
-
-Example shape (replace with your values):
 
 ```env
 GEMINI_API_KEY=your_gemini_key
 GOOGLE_PLACE_API=your_google_places_key
-CLERK_ISSUER=https://your-instance.clerk.accounts.dev
 SUPABASE_DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname
 ```
 
@@ -93,18 +87,11 @@ SUPABASE_DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname
 
 | Variable | Purpose |
 | -------- | ------- |
-| `CLERK_SECRET_KEY` | **Required.** Server-side Clerk key for `clerkMiddleware`, session handling, and protected routes |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | **Required.** The `@clerk/nextjs` `ClerkProvider` and client-side Clerk UI load using the **publishable** key; without it, sign-in/up and client components will not initialize |
 | `NEXT_PUBLIC_API_URL` | Optional. Defaults to `http://localhost:8000` if unset; set this if your API runs on another host/port |
 
 ```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
-
-**Why both Clerk keys?**  
-`NEXT_PUBLIC_*` is exposed to the browser on purpose—that is how Clerk’s client SDK knows which application to talk to. `CLERK_SECRET_KEY` stays server-only and is required for Next.js middleware and server features. You need **both** for local development with this stack.
 
 ---
 

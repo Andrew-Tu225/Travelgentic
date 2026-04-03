@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { sendTripChat } from "@/lib/api";
 
 function Spinner({ className }) {
@@ -248,7 +247,6 @@ function TripChatbotPanel({
 }
 
 export function TripChatbot({ tripId, tripDestination, onItineraryUpdate }) {
-  const { getToken } = useAuth();
   const [open, setOpen] = useState(true);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -312,9 +310,7 @@ export function TripChatbot({ tripId, tripDestination, onItineraryUpdate }) {
     setLoading(true);
 
     try {
-      const token = await getToken();
-      if (!token) throw new Error("You must be signed in to chat.");
-      const result = await sendTripChat(tripId, messageText, token);
+      const result = await sendTripChat(tripId, messageText);
 
       setMessages((prev) => [
         ...prev,

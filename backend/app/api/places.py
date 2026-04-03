@@ -1,9 +1,8 @@
 import logging
 import httpx
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
-from app.core.clerk_auth import require_clerk_user
 from app.services.places_service import get_place_photos
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,6 @@ router = APIRouter()
 @router.get("/places/{place_id}/photo")
 async def get_place_photo(
     place_id: str,
-    clerk_id: str = Depends(require_clerk_user),
 ):
     """
     Securely fetch a photo for a place_id and stream it to the client.

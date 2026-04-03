@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.models import User, Trip, ItineraryDate, Activity, TripStatus
+from app.models.models import Trip, ItineraryDate, Activity, TripStatus
 
 
 def trip_to_list_item_dict(t: Trip) -> dict:
@@ -25,28 +25,20 @@ def trip_to_list_item_dict(t: Trip) -> dict:
     }
 
 
-async def get_user_by_clerk_id(db: AsyncSession, clerk_id: str) -> User | None:
-    result = await db.execute(select(User).where(User.clerk_id == clerk_id))
-    return result.scalar_one_or_none()
-
-
-async def list_trips_for_user(db: AsyncSession, user_id) -> list[Trip]:
+async def list_all_trips(db: AsyncSession) -> list[Trip]:
     trips_result = await db.execute(
-        select(Trip)
-        .where(Trip.user_id == user_id)
-        .order_by(Trip.created_at.desc())
+        select(Trip).order_by(Trip.created_at.desc())
     )
     return list(trips_result.scalars().all())
 
 
-async def get_trip_with_itinerary_for_user(
+async def get_trip_with_itinerary(
     db: AsyncSession,
     trip_id: str,
-    user_id,
 ) -> Trip | None:
     stmt = (
         select(Trip)
-        .where(Trip.id == trip_id, Trip.user_id == user_id)
+        .where(Trip.id == trip_id)
         .options(
             selectinload(Trip.itinerary_dates).selectinload(ItineraryDate.activities)
         )
@@ -92,15 +84,12 @@ def format_trip_response(trip: Trip) -> dict:
 
 async def persist_generated_itinerary(
     db: AsyncSession,
-    user: User,
     itinerary_result: dict,
 ) -> Trip:
     """
-    Persist a newly generated itinerary: Trip, ItineraryDates, Activities,
-    increment user.trips_generated, and commit.
+    Persist a newly generated itinerary: Trip, ItineraryDates, Activities, and commit.
     """
     trip = Trip(
-        user_id=user.id,
         destination=itinerary_result["destination"],
         origin=itinerary_result.get("origin"),
         month=itinerary_result.get("month"),
@@ -136,6 +125,5 @@ async def persist_generated_itinerary(
             )
             db.add(activity)
 
-    user.trips_generated += 1
     await db.commit()
     return trip
